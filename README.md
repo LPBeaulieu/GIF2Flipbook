@@ -16,7 +16,7 @@ This application lets you create up to eight flipbooks at a time from GIFs and o
 
 <p align="left"> <b>GIF2Flipbook</b> is a tool enabling you to create up to eight flipbooks at a time from GIFs and other animated image formats, such as WebP files. Simply place you GIFs within the designated folder and run the code, and you will soon have a PDF document ready for printing! 
 
-A neat feature of this app is that you can "pair up" two different GIFs of your choosing on opposite sides of the flipbooks!
+A neat feature of this app is that you can "pair up" two different GIFs of your choosing on opposite sides of the flipbooks, so that you can continue on flippipng on the other side when you're done watching an animation!
 <br> 
 </p>
 
