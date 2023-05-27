@@ -1,7 +1,7 @@
 # GIF2Flipbook
 This application lets you create up to eight flipbooks at a time from GIFs and other animated image formats!
 
-![Image RTF basic mode](https://github.com/LPBeaulieu/Typewriter-OCR-TintypeText/blob/main/TintypeText%20basic%20rtf%20mode%20screenshot.jpg)
+![Betty Boop flipbook GIF](https://github.com/LPBeaulieu/GIF2Flipbook/blob/main/BettyBoopDemo.gif)
 <h3 align="center">GIF2Flipbook</h3>
 <div align="center">
   
@@ -61,7 +61,7 @@ py gif2flipbook.py
 ```
 Depending on the number of frames of your GIFs, it may take several minutes for the code to generate your PDF file, which may be very large in size.  
 
-- The GIF with the maximal number of frames will be selected to determine the numbert of pages in the PDF document, with the shorter GIFs looping over and over until the longest one completes. You can also input the number of frames that you wish the flipbooks to contain if you want an even longer number of frames than the longest GIF contains. Simply pass in the number of frames after the "minimum_frame_number:" argument when running the code.
+- The GIF with the maximal number of frames will be selected to determine the numbert of pages in the PDF document, with the shorter GIFs looping over and over until the longest one completes. You can also input the number of frames that you wish the flipbooks to contain if you want a truncated or prolonged flipbook. Simply pass in the number of frames after the "number_of_frames:" argument when running the code.
 
 - The size of the border (default of 0.25 inch) may be changed to another value. Simply pass in the number of inches (in decimal form and without units) after the "border:" argument. For borderless printing, enter "border:0" when running the code.
 
@@ -69,7 +69,7 @@ Depending on the number of frames of your GIFs, it may take several minutes for 
 
 - Two orthogonal central lines are drawn on one side of every sheet of paper to facilitate cutting the pages when you are assembling your flipbook. Make sure to line up the pages nicely along the precut edges (long and short sides of the 8 1/2 by 11 inch pages) so that the flipbook will flip smoothly. Should you be using perforated printing paper, effectively dispensing you from needing to use scissors, you could avoid having these lines by passing in the "no_lines" argument when running the code.
 
-- Make sure that you include a space in-between arguments and that you place each argument within quotes when running the Python code (for example: py gif2flipbook.py "border:0.5" "minimum_frame_number:100" "no_lines".   
+- Make sure that you include a space in-between arguments and that you place each argument within quotes when running the Python code (for example: py gif2flipbook.py "border:0.5" "number_of_frames:100" "no_lines".   
 
         
 <br><b>And there you have it!</b> You're now ready to convert your favorite GIFs into analog flipbook format! You can now enjoy your favorite GIFs when your phone's battery is dead or your internet connection is down! 📽📇
