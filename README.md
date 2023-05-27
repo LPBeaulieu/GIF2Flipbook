@@ -1,7 +1,9 @@
 # GIF2Flipbook
 This application lets you create up to eight flipbooks at a time from GIFs and other animated image formats!
 
-![Betty Boop flipbook GIF](https://github.com/LPBeaulieu/GIF2Flipbook/blob/main/BettyBoopDemo.gif)
+<p align="center">
+  <img src="https://github.com/LPBeaulieu/GIF2Flipbook/blob/main/BettyBoopDemo.gif" alt="Betty Boop flipbook GIF" />
+</p>
 <h3 align="center">GIF2Flipbook</h3>
 <div align="center">
   
