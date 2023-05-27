@@ -2,7 +2,7 @@ from alive_progress import alive_bar
 import glob
 import math
 import os
-from PIL import Image, ImageDraw, ImageFont, ImageOps
+from PIL import Image, ImageDraw
 import re
 import shutil
 import sys
@@ -37,11 +37,11 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
     #argument may be passed in when running the code.
     no_size_increase = False
 
-    #The "minimum_frame_number" variable allows the user to specify
+    #The "number_of_frames" variable allows the user to specify
     #the minimum number of frames that the flipbook will contain.
-    #Should the selected GIFS have less frames than "minimum_frame_number",
+    #Should the selected GIFS have less frames than "number_of_frames",
     #they will loop over until the required amount of frames has been reached.
-    minimum_frame_number = None
+    number_of_frames = None
 
     if len(sys.argv) > 1:
         #The "try/except" statement will
@@ -58,8 +58,8 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
                     lines = False
                 elif sys.argv[i].strip().lower() in ["no_size_increase", "no_size_increase"]:
                     no_size_increase = True
-                elif sys.argv[i][:21].strip().lower() == "minimum_frame_number:":
-                    minimum_frame_number = int(sys.argv[i][21:])
+                elif sys.argv[i][:17].strip().lower() == "number_of_frames:":
+                    number_of_frames = int(sys.argv[i][17:])
 
         except Exception as e:
             print(e)
@@ -76,11 +76,11 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
     gif_names = [re.split(r"/|\\", gif_files[i])[-1].split(".")[0] for i in range(len(gif_files))]
 
     with alive_bar(len(gif_files)) as bar:
-        #The number of frames in each GIF will be collected in the list "number_of_frames",
+        #The number of frames in each GIF will be collected in the list "gif_number_of_frames",
         #and the GIF with the most frames will be used as a guideline for how many times
         #the other GIFS need to loop over until the end of the flipbooks, as they are
         #all printed on the same sheet of paper.
-        number_of_frames = []
+        gif_number_of_frames = []
         #The paths of the PNG images for every frame of each GIF are stored in the list
         #"gif_png_paths".
         gif_png_paths = []
@@ -103,17 +103,20 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
             #the suffix (ex: 0.gif), and then excluding the extension and converting the resulting
             #strings into integers.
             gif_png_paths.append(sorted(glob.glob(path_pngs), key=lambda x:int(x.split("-")[-1].split(".")[0])))
-            number_of_frames.append(gif_object.n_frames)
+            gif_number_of_frames.append(gif_object.n_frames)
             bar()
 
     #The maximum number of frames for the longest
     #GIF is stored in "maximum_frame_number" and if
-    #it is inferior to "minimum_frame_number", the
-    #its value would be set to that of "minimum_frame_number".
-    maximum_frame_number = max(number_of_frames)
+    #it is smaller or larger than "number_of_frames",
+    #its value would be set to that of "number_of_frames".
+    #This way, the user can truncate a GIF that has too
+    #many frames or allow the GIFs to loop over until
+    #the desired number of frames is reached.
+    maximum_frame_number = max(gif_number_of_frames)
 
-    if minimum_frame_number and maximum_frame_number < minimum_frame_number:
-        maximum_frame_number = minimum_frame_number
+    if number_of_frames and maximum_frame_number != number_of_frames:
+        maximum_frame_number = number_of_frames
 
     #The number of frames in every GIF is printed on screen to allow
     #the users to select GIFS of similar lengths for making flipbooks,
@@ -121,7 +124,7 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
     #simply be looped over until the "maximum_frame_number" is reached.
     print("\n\nHere is the number of frames in your GIFS:\n")
     for i in range(len(gif_names)):
-        print("- " + gif_names[i] + ": " + str(number_of_frames[i]))
+        print("- " + gif_names[i] + ": " + str(gif_number_of_frames[i]))
 
     #The following nested "for" loops will populate the list
     #"png_index_list", which will determine when a shorter GIF
@@ -293,7 +296,7 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
                 quality=100, resolution=300)
                 if len(gif_files) > 4:
                     blank_canvas_reverse.save(os.path.join(cwd, "flipbook.pdf"),
-                    quality=100, resolution=300)
+                    append=True, quality=100, resolution=300)
 
             else:
                 blank_canvas.save(os.path.join(cwd, "flipbook.pdf"),
