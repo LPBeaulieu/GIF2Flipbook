@@ -72,7 +72,7 @@ Depending on the number of frames of your GIFs, it may take a few minutes for th
 - Make sure that you include a space in-between arguments and that you frame each argument in quotes when running the Python code (for example: py gif2flipbook.py "border:0.5" "minimum_frame_number:100" "no_lines".   
 
         
-<br><b>And there you have it!</b> You're now ready to convert your favorite GIFs in analog flipbook format! You can now watch your favorite GIFs even when your phone's battery is dead or your internet connection is down! 📽📇
+<br><b>And there you have it!</b> You're now ready to convert your favorite GIFs into analog flipbook format! You can now watch your favorite GIFs even when your phone's battery is dead or your internet connection is down! 📽📇
   
   
 ## ✍️ Authors <a name = "author"></a>
