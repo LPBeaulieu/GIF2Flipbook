@@ -2,7 +2,7 @@ from alive_progress import alive_bar
 import glob
 import math
 import os
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 import re
 import shutil
 import sys
@@ -23,6 +23,10 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
     #of the page is set to a quarter inch (or rather the
     #corresponding number of pixels, 75 px)
     border = math.floor(0.25*300)
+
+    #The frame number i+1 from the "for i in range(maximum_frame_number):" loop
+    #is printed in the top of each quadrant in order to facilitate flipbook assembly.
+    numbers_font = ImageFont.truetype(os.path.join(cwd, "baskvl.ttf"), 60)
 
     #By default, central horizontal and vertical lines will
     #divide every sheet of paper in four even parts to facilitate
@@ -287,6 +291,41 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
             if lines:
                 blank_canvas_editable.line([(2550/2, 0), (2550/2, 3300)], fill="Gainsboro", width=5)
                 blank_canvas_editable.line([(0, 3300/2), (2550, 3300/2)], fill="Gainsboro", width=5)
+
+            #The frame number in the top of each quadrant in order to facilitate flipbook assembly.
+            #The function below creates an image with the number text, which will be pasted over
+            #the "blank_canvas" and "blank_canvas_reverse". Such a function is used instead of
+            #writing directly on "blank_canvas" and "blank_canvas_reverse", since two of the
+            #numbers need to be flipped.
+            def text_image(number, numbers_font):
+                page_number_size = numbers_font.getsize(str(number))
+                page_number_text = Image.new('RGBA', page_number_size, (255, 255, 255, 0))
+                page_number_text_editable = ImageDraw.Draw(page_number_text)
+                page_number_text_editable.text((0,0), str(number), font=numbers_font, fill="LightSlateGrey")
+                return page_number_text, page_number_size
+
+            #The number text images are pasted onto "blank_canvas" in the top of each flipbook page,
+            #with central horizontal alignment. The numbers of the upper two quadrants need to be
+            #flipped (rotated 180 degrees), as the GIF frames are also flipped in these quadrants.
+            #The page numbering corresponds to "maximum_frame_number-i", as the last frame is printed
+            #first on odd-numbered pages of the PDF document.
+            page_number_text, page_number_size = text_image(maximum_frame_number-i, numbers_font)
+            page_number_half_width = page_number_size[0]/2
+            blank_canvas.paste(page_number_text.rotate(180), (math.floor(2550*0.25-page_number_half_width), math.floor(3300/2-border-page_number_size[1])))
+            blank_canvas.paste(page_number_text.rotate(180), (math.floor(2550*0.75-page_number_half_width), math.floor(3300/2-border-page_number_size[1])))
+            blank_canvas.paste(page_number_text, (math.floor(2550*0.25-page_number_half_width), math.floor(3300/2+border)))
+            blank_canvas.paste(page_number_text, (math.floor(2550*0.75-page_number_half_width), math.floor(3300/2+border)))
+
+            #The numbers text images are pasted onto "blank_canvas_reverse" only if there are more than four GIFs,
+            #meaning that they will be printed on both sides of the page. However, the ordering is reversed, so the
+            #number written on "blank_canvas_reverse" corresponds to "i+1".
+            if len(gif_files) > 4:
+                page_number_text, page_number_size = text_image(i+1, numbers_font)
+                page_number_half_width = page_number_size[0]/2
+                blank_canvas_reverse.paste(page_number_text.rotate(180), (math.floor(2550*0.25-page_number_size[0]/2), math.floor(3300/2-border-page_number_size[1])))
+                blank_canvas_reverse.paste(page_number_text.rotate(180), (math.floor(2550*0.75-page_number_size[0]/2), math.floor(3300/2-border-page_number_size[1])))
+                blank_canvas_reverse.paste(page_number_text, (math.floor(2550*0.75-page_number_half_width), math.floor(3300/2+border)))
+                blank_canvas_reverse.paste(page_number_text, (math.floor(2550*0.25-page_number_half_width), math.floor(3300/2+border)))
 
             #The PDF files are saved in the "if" and "else" statements
             #below, with the "append=True" option being selected for
