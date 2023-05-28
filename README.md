@@ -73,9 +73,9 @@ Depending on the number of frames of your GIFs, it may take several minutes for 
 
 - Make sure that you include a space in-between arguments and that you place each argument within quotes when running the Python code (for example: py gif2flipbook.py "border:0.5" "number_of_frames:100" "no_lines".   
 
-- Once you are done printing and cutting your pages, you can perforate the pages and bind them with 1 inch plastic binder rings. Despite my shoddy scissor work, the flipbooks still turned out great!
-
 - Flipbook page numbers are provided to help you assemble the flipbooks. Please keep in mind that the first page should be at the bottom of the flipbook, facing up, as it is the first frame that you will see when flipping the pages.
+
+- Once you are done printing and cutting your pages, you can perforate the pages and bind them with 1 inch plastic binder rings. Despite my shoddy scissor work, the flipbooks still turned out great!
 
 ![Figure 1](https://github.com/LPBeaulieu/GIF2Flipbook/blob/main/Flipbook%20binding.jpg)<hr> <b>Figure 1.</b> Simply bind your perforated page with binder rings for very nifty looking flipbooks!
         
