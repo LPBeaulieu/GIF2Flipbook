@@ -1,5 +1,5 @@
 # GIF2Flipbook
-This application lets you create up to eight flipbooks at a time from GIFs and other animated image formats!
+This application lets you create up to eight flipbooks at a time from videos, GIFs and other animated image formats!
 
 <p align="center">
   <img src="https://github.com/LPBeaulieu/GIF2Flipbook/blob/main/BettyBoopDemo.gif" alt="Betty Boop flipbook GIF" />
@@ -16,9 +16,9 @@ This application lets you create up to eight flipbooks at a time from GIFs and o
 
 ---
 
-<p align="left"> <b>GIF2Flipbook</b> is a tool enabling you to create up to eight flipbooks at a time from GIFs and other animated image formats, such as WebP files. Simply place you GIFs within the designated folder and run the code, and you will soon have a PDF document ready for printing! 
+<p align="left"> <b>GIF2Flipbook</b> is a tool enabling you to create up to eight flipbooks at a time from videos, GIFs and other animated image formats, such as WebP files. Simply place you files within the designated folder and run the code, and you will soon have a PDF document ready for printing! 
 
-A neat feature of this app is that you can "pair up" two different GIFs of your choosing on opposite sides of the flipbooks, so that you can continue on flippipng on the other side when you're done watching an animation!
+A neat feature of this app is that you can "pair up" two different animations of your choosing on opposite sides of the flipbooks, so that you can continue on flippipng on the other side!
 <br> 
 </p>
 
@@ -30,9 +30,9 @@ A neat feature of this app is that you can "pair up" two different GIFs of your 
 - [Acknowledgments](#acknowledgments)
 
 ## ⛓️ Dependencies / Limitations <a name = "limitations"></a>
-- It is important that the file names of the GIFs that you will add to the "GIFS" folder within your working folder only contain letters,  numbers and hyphens, without any special characters or spaces, to enable the code to properly extract the file names. 
+- It is important that the file names of the animated files that you will add to the "GIFS" folder within your working folder only contain letters,  numbers and hyphens, without any special characters or spaces (except for videos, more on that later), to enable the code to properly extract the file names. 
 
-- The GIFs are printed in the corners of 8 1/2 by 11 inch pages, with a default margin measuring 0.25 inch. The first four GIFs that you generate simultaneously will be created in the four corners of a sheet of paper. However, when "pairing up" two different GIFs on opposite sides of a flipbook, you need to print at least five GIFs at a time, such that they would be printed on both sides of the sheet of paper. Simply add a prefix consisting of the same letter and a hyphen at the start of the two paired GIF file names (for example: "A-file1.gif and A-file2.gif"). You would then need to print your flipbooks in duplex mode, flipping on the long edge of the paper.
+- The flipbook frames are printed in the corners of 8 1/2 by 11 inch pages, with a default margin measuring 0.25 inch. The first four animations that you generate simultaneously will be created in the four corners of a sheet of paper. However, when "pairing up" two different animations on opposite sides of a flipbook, you need to print at least five animations at a time, such that they would be printed on both sides of the sheet of paper. Simply add a prefix consisting of the same letter and a hyphen at the start of the two paired animation file names (for example: "A-file1.gif and A-file2.gif"). You would then need to print your flipbooks in duplex mode, flipping on the long edge of the paper.
 
 
 ## 🏁 Getting Started <a name = "getting_started"></a>
@@ -54,7 +54,16 @@ py -m pip install --upgrade Pillow
 py -m pip install alive-progress
 ```
 
-<b>Step 3</b>- You're now ready to use <b>GIF2Flipbook</b>! 🎉
+<b>Step 3</b>- Install <b>ffmpeg</b> (A media tool to convert video formats) by <b>either</b> following the steps in this link: https://www.wikihow.com/Install-FFmpeg-on-Windows <b>OR</b> by installing the MoviePy Python module (https://zulko.github.io/moviepy/) that automatically installs ffmpeg with the following commands:
+```
+py -m pip install ez_setup
+```
+followed by:
+```
+py -m pip install moviepy
+```
+
+<b>Step 4</b>- You're now ready to use <b>GIF2Flipbook</b>! 🎉
 
 ## 🎈 Usage <a name="usage"></a>
 - Simply place between 1 and 8 GIFs that you wish to convert into flipbooks into the "GIFS" subfolder within your working folder and enter the following in the Powershell within your working folder:
