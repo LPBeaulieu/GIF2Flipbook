@@ -1,6 +1,8 @@
 from alive_progress import alive_bar
+import cv2
 import glob
 import math
+import numpy as np
 import os
 from PIL import Image, ImageDraw, ImageFont
 import re
@@ -42,17 +44,18 @@ number_of_frames = None
 #video to convert into a flipbook. The default "start_time"
 #(time stamp at which the clip begins) is set to zero seconds
 #and the "end_time" (time stamp at which the video clip stops)
-#is "None" and these will be replaced by the time stamps included
-#in the name of the video file (if any). Should the user not specify
-#these, the first five seconds of the video will be converted into
-#a flipbook.
+#is set to five seconds. These will be replaced by the time
+#stamps included in the name of the video file (if any). Should
+#the user not specify these, the first five seconds of the video
+#will be converted into a flipbook.
 start_time = 0
-end_time = None
-duration = 5
+end_time = 5
 
 #The default number of frames per second ("fps") is set to 25
-#and the user may select another number.
-fps = "25"
+#and the user may select another number. The minimum between
+#the actual fps of the video and the value of "fps" will be selected,
+#as the video cannot have more frames than its fps would allow.
+fps = 25
 
 if len(sys.argv) > 1:
     #The "try/except" statement will
@@ -73,8 +76,6 @@ if len(sys.argv) > 1:
                 number_of_frames = int(sys.argv[i][17:])
             elif sys.argv[i][:4].strip().lower() == "fps:":
                 fps = sys.argv[i][4:].strip()
-
-
     except Exception as e:
         print(e)
         sys.exit('\nPlease specify the non-printable border (in inches and decimal form, but without units) ' +
@@ -89,96 +90,17 @@ path_gifs = os.path.join(cwd, "GIFS", "*.*")
 #'b-name-3.gif', 'B-name-4.gif', 'c-name-5.gif', 'C-name-6.gif', 'd-name-7.gif', 'D-name-8.gif']",
 #where GIFS sharing a letter would feature on flip sides of the same quadrant of the sheet of paper.
 gif_files = sorted(glob.glob(path_gifs), key=str.lower)
+gif_files_extensions = []
 
 if len(gif_files) > 0 and len(gif_files) <= 8:
-
-    #The files within the "GIF" folder are checked to see
-    #whether they are of the same type as some of the most
-    #common animated image formats ("gif", "webp", "apng",
-    #"avif", "flif" and "mng"). If not, the "try, except"
-    #statement below attempts to convert the presumed
-    #video files into "WebP" format using ffmpeg.
-    for i in range(len(gif_files)):
-        file_path_split = gif_files[i].split(".")
-        file_extension = file_path_split[-1].lower()
-        webp_file_path = "".join(file_path_split[:-1]) + ".webp"
-        if file_extension not in ["gif", "webp", "apng", "avif", "flif", "mng"]:
-
-            try:
-                #Should the user wish to only convert a clip of the video
-                #into a flipbook, they must specify the starting and ending
-                #point of the clip by including them within parentheses.
-                #The numer of hours, minutes and seconds need to be separated
-                #by hyphens within these parentheses. For example, a clip of a MP4
-                #video starting at 1 hour 35 minutes and 5 seconds and ending at 1
-                #hour 35 minutes and 10 seconds would have the following
-                #parentheses: "A-videoname-(1-35-5)(1-35-10).mp4"
-                #The regex expression below (r"[(]([\d|-]+)[)]") only retains
-                #the contents of every parentheses in the file name. The users
-                #should then refrain from using parentheses other than when
-                #indicating the starting and ending points of the subclips.
-                start_end = re.findall(r"[(]([\d|-]+)[)]", gif_files[i])
-
-                #If there is more than one set of parentheses in the file name,
-                #it likely means that the user has specified a starting and ending
-                #point to the subclip. They are then sorted (just in case the user
-                #has accidentally provided the stopping point before the starting point)
-                #and then each of them are split along hyphens to determine the number of
-                #hours, minutes and seconds that each time point corresponds to. These are
-                #then converted into seconds.
-                if len(start_end) > 1:
-                    start_end.sort()
-                    if "-" in start_end[0]:
-                        start_time = [element.strip() for element in start_end[0].split("-")]
-                        if len(start_time) > 2:
-                            start_time = int(start_time[0])*3600 + int(start_time[1])*60 + int(start_time[2])
-                        else:
-                            start_time = int(start_time[0])*60 + int(start_time[1])
-                    else:
-                        start_time = int(start_end[0])
-
-                    if "-" in start_end[1]:
-                        end_time = [element.strip() for element in start_end[1].split("-")]
-                        if len(end_time) > 2:
-                            end_time = int(end_time[0])*3600 + int(end_time[1])*60 + int(end_time[2])
-                        else:
-                            end_time = int(end_time[0])*60 + int(end_time[1])
-                    else:
-                        end_time = int(start_end[1])
-
-                    #The duration of the subclip is determined as the difference
-                    #between the "end_time" and "start_time".
-                    duration = end_time - start_time
-
-                #Should the user only have provided a starting point or and ending point (and not both),
-                #The following error message is provided.
-                elif len(start_end) == 1:
-                    sys.exit('\nPlease specify both and start time and end time for your videoclip ' +
-                    'by enclosing them within parentheses in your file name. The hours, seconds and ' +
-                    'minutes need to be separated by a hyphen. \nFor example, a video clip starting at ' +
-                    '1 hour 35 minutes and 5 seconds and ending at 1 hour 35 minutes and 10 seconds would ' +
-                    'have the following parentheses: "A-videoname-(1-35-5)(1-35-10).mp4"')
-
-                #The ffmpeg command is issued using the "os.system()" method to convert the videoclip into WebP format.
-                os.system("ffmpeg" + (" -ss " + str(start_time) + " -t " + str(duration)) + " -i " + "'" + gif_files[i]
-                + "'" + " -vcodec libwebp " + "-filter:v fps=fps=" + fps + " -lossless 1 -loop 1 -preset default " +
-                "-an -sn -vsync 0 " + "'" + webp_file_path + "'")
-                #The original video path within the "gif_files[i]" is then replaced with that
-                #of the corresponding WebP file.
-                gif_files[i] = webp_file_path
-
-            except:
-                sys.exit(file_extension + " files are not supported by this application." +
-                " Please use another file format such as GIF, WebP or MP4.")
-
-    print("\nCurrently doing preliminary processing of " + str(len(gif_files)) + " animation " +
-    ("files")*(len(gif_files) > 1) + ("file")*(len(gif_files) == 1) + ":\n")
-
     #The GIF file names are extracted from the paths when splitting along the backslash or forward
     #slash path dividers and selecting for the last element, and then spitting it along the periods
     #and selecting the first resulting element to remove the extension. It is important that the
     #GIF file names do not contain any special characters (only letters and no spaces).
     gif_names = [re.split(r"/|\\", gif_files[i])[-1].split(".")[0] for i in range(len(gif_files))]
+
+    print("\nCurrently doing preliminary processing of " + str(len(gif_files)) + " animation " +
+    ("files")*(len(gif_files) > 1) + ("file")*(len(gif_files) == 1) + ":\n")
 
     with alive_bar(len(gif_files)) as bar:
         #The number of frames in each GIF will be collected in the list "gif_number_of_frames",
@@ -186,29 +108,131 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
         #the other GIFS need to loop over until the end of the flipbooks, as they are
         #all printed on the same sheet of paper.
         gif_number_of_frames = []
+
         #The paths of the PNG images for every frame of each GIF are stored in the list
         #"gif_png_paths".
         gif_png_paths = []
+
+        #The files within the "GIF" folder are checked to see
+        #whether they are of the same type as some of the most
+        #common animated image formats ("gif", "webp", "apng",
+        #"avif", "flif" and "mng"). If not, the "try, except"
+        #statement below attempts extract the frames of the
+        #video within the "start_time" and "end_time"
+        #timestamps and save them as PNG images.
         for i in range(len(gif_files)):
+            file_path_split = gif_files[i].split(".")
+            file_extension = file_path_split[-1].lower()
+            gif_files_extensions.append(file_extension)
             #A "PNG" folder containing subfolders for every GIF is created.
             if not os.path.exists(os.path.join(cwd, "PNGS", gif_names[i])):
                 os.makedirs(os.path.join(cwd, "PNGS", gif_names[i]))
-            #The individual frames of every GIF are exported as PNG images
-            #using the "Image.seek()" method to bring the GIF object to the
-            #frame number "j".
-            with Image.open(gif_files[i]) as gif_object:
-                for j in range(gif_object.n_frames):
-                    gif_object.seek(j)
-                    gif_object.save(os.path.join(cwd, 'PNGS', gif_names[i], gif_names[i] + "-" + str(j) + '.png'))
-
+            #The "path_pngs" path will be used to populate the "list gif_png_paths"
+            #with the paths of all "PNG" files that will be extracted from the animations.
             path_pngs = os.path.join(cwd, "PNGS", gif_names[i], "*.png")
-            #The paths of the PNG files extracted from the GIFS are stored within the list "gif_png_paths".
-            #As the paths are strings, they need to be sorted numerically using a lambda function that
-            #splits the path strings along the hyphens, and indexing the last element, corresponding to
-            #the suffix (ex: 0.gif), and then excluding the extension and converting the resulting
-            #strings into integers.
-            gif_png_paths.append(sorted(glob.glob(path_pngs), key=lambda x:int(x.split("-")[-1].split(".")[0])))
-            gif_number_of_frames.append(gif_object.n_frames)
+
+            if file_extension not in ["gif", "webp", "apng", "avif", "flif", "mng"]:
+                try:
+                    #Should the user wish to only convert a clip of the video
+                    #into a flipbook, they must specify the starting and ending
+                    #point of the clip by including them within parentheses.
+                    #The numer of hours, minutes and seconds need to be separated
+                    #by hyphens within these parentheses. For example, a clip of a MP4
+                    #video starting at 1 hour 35 minutes and 5 seconds and ending at 1
+                    #hour 35 minutes and 10 seconds would have the following
+                    #parentheses: "A-videoname-(1-35-5)(1-35-10).mp4"
+                    #The regex expression below (r"[(]([\d|-]+)[)]") only retains
+                    #the contents of every parentheses in the file name. The users
+                    #should then refrain from using parentheses other than when
+                    #indicating the starting and ending points of the subclips.
+                    start_end = re.findall(r"[(]([\d|-]+)[)]", gif_files[i])
+
+                    #If there is more than one set of parentheses in the file name,
+                    #it likely means that the user has specified a starting and ending
+                    #point to the subclip. They are then sorted (just in case the user
+                    #has accidentally provided the stopping point before the starting point)
+                    #and then each of them are split along hyphens to determine the number of
+                    #hours, minutes and seconds that each time point corresponds to. These are
+                    #then converted into seconds.
+                    if len(start_end) > 1:
+                        start_end.sort()
+                        if "-" in start_end[0]:
+                            start_time = [element.strip() for element in start_end[0].split("-")]
+                            if len(start_time) > 2:
+                                start_time = int(start_time[0])*3600 + int(start_time[1])*60 + int(start_time[2])
+                            else:
+                                start_time = int(start_time[0])*60 + int(start_time[1])
+                        else:
+                            start_time = int(start_end[0])
+
+                        if "-" in start_end[1]:
+                            end_time = [element.strip() for element in start_end[1].split("-")]
+                            if len(end_time) > 2:
+                                end_time = int(end_time[0])*3600 + int(end_time[1])*60 + int(end_time[2])
+                            else:
+                                end_time = int(end_time[0])*60 + int(end_time[1])
+                        else:
+                            end_time = int(start_end[1])
+
+                    #Should the user only have provided a starting point or and ending point (and not both),
+                    #The following error message is provided.
+                    elif len(start_end) == 1:
+                        sys.exit('\nPlease specify both and start time and end time for your videoclip ' +
+                        'by enclosing them within parentheses in your file name. The hours, seconds and ' +
+                        'minutes need to be separated by a hyphen. \nFor example, a video clip starting at ' +
+                        '1 hour 35 minutes and 5 seconds and ending at 1 hour 35 minutes and 10 seconds would ' +
+                        'have the following parentheses: "A-videoname-(1-35-5)(1-35-10).mp4"')
+
+                    #A "VideoCapture" object is instantiated.
+                    video = cv2.VideoCapture(gif_files[i])
+                    #The minimum number of frames per second between the default value of 25 (or the user-specified value)
+                    #and the actual fps of the video is selected as the new value of "fps", as the video cannot have more
+                    #frames than its fps would allow.
+                    video_frame_count = video.get(cv2.CAP_PROP_FRAME_COUNT)
+                    video_fps = video.get(cv2.CAP_PROP_FPS)
+                    fps = min(fps, math.floor(video_frame_count/video_fps))
+                    #The timestamps of the frames in-between the "start_time" and
+                    #"end_time" are assembled in the list "frame_timestamps".
+                    frame_timestamps = np.arange(start_time, end_time, 1/fps).tolist()
+                    #The number of frames of the selected clip from the video is
+                    #appended to the list "gif_number_of_frames". This needs to be
+                    #done before the "for" loop below, given "frame_timestamps.pop(0)".
+                    gif_number_of_frames.append(len(frame_timestamps))
+                    #The following "for" loop loops through every frame
+                    #of the video and selects those where the selected timestamps
+                    #in "frame_timestamps" are smaller than the current loop timestamp,
+                    #given by dividing the frame number by the actual video fps ("video_fps").
+                    for j in range(math.ceil(video_frame_count)):
+                        frame_exists, frame = video.read()
+                        if frame_timestamps and frame_timestamps[0] <= j/video_fps:
+                            cv2.imwrite(os.path.join(cwd, 'PNGS', gif_names[i], gif_names[i] + "-" + str(j) + '.png'), frame)
+                            frame_timestamps.pop(0)
+                    #The paths of the PNG files extracted from the GIFS are stored within the list "gif_png_paths".
+                    #As the paths are strings, they need to be sorted numerically using a lambda function that
+                    #splits the path strings along the hyphens, and indexing the last element, corresponding to
+                    #the suffix (ex: 0.gif), and then excluding the extension and converting the resulting
+                    #strings into integers.
+                    gif_png_paths.append(sorted(glob.glob(path_pngs), key=lambda x:int(x.split("-")[-1].split(".")[0])))
+
+                except:
+                    sys.exit(file_extension + " files are not supported by this application." +
+                    " Please use another file format such as GIF, WebP or MP4.")
+
+            else:
+                #The individual frames of every GIF are exported as PNG images
+                #using the "Image.seek()" method to bring the GIF object to the
+                #frame number "j".
+                with Image.open(gif_files[i]) as gif_object:
+                    for j in range(gif_object.n_frames):
+                        gif_object.seek(j)
+                        gif_object.save(os.path.join(cwd, 'PNGS', gif_names[i], gif_names[i] + "-" + str(j) + '.png'))
+                    #The paths of the PNG files extracted from the GIFS are stored within the list "gif_png_paths".
+                    #As the paths are strings, they need to be sorted numerically using a lambda function that
+                    #splits the path strings along the hyphens, and indexing the last element, corresponding to
+                    #the suffix (ex: 0.gif), and then excluding the extension and converting the resulting
+                    #strings into integers.
+                    gif_png_paths.append(sorted(glob.glob(path_pngs), key=lambda x:int(x.split("-")[-1].split(".")[0])))
+                    gif_number_of_frames.append(gif_object.n_frames)
             bar()
 
     #The maximum number of frames for the longest
