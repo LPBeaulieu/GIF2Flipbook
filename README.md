@@ -75,6 +75,8 @@ Depending on the number of frames of your GIFs, it may take several minutes for 
 
 - Flipbook page numbers are provided to help you assemble the flipbooks. Please keep in mind that the first page should be at the bottom of the flipbook, facing up, as it is the first frame that you will see when flipping the pages.
 
+- Please be careful not to confuse the PDF page numbers with the frame numbers printed on the flipbook pages when printing your document. Also, you might need to select the "print in reverse order" option when printing if your printer prints the pages with the images facing up.
+
 - Once you are done printing and cutting your pages, you can perforate the pages and bind them with 1 inch plastic binder rings. Despite my shoddy scissor work, the flipbooks still turned out great!
 
 ![Figure 1](https://github.com/LPBeaulieu/GIF2Flipbook/blob/main/Flipbook%20binding.jpg)<hr> <b>Figure 1.</b> Simply bind your perforated page with binder rings for very nifty looking flipbooks!
