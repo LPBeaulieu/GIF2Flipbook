@@ -9,6 +9,80 @@ import sys
 
 
 cwd = os.getcwd()
+#The default non-printable border at the top and bottom
+#of the page is set to a quarter inch (or rather the
+#corresponding number of pixels, 75 px)
+border = math.floor(0.25*300)
+
+#The frame number i+1 from the "for i in range(maximum_frame_number):" loop
+#is printed in the top of each quadrant in order to facilitate flipbook assembly.
+numbers_font = ImageFont.truetype(os.path.join(cwd, "baskvl.ttf"), 60)
+
+#By default, central horizontal and vertical lines will
+#divide every sheet of paper in four even parts to facilitate
+#cutting the pages after printing. The user can pass in the
+#argument "no_lines" when running the code if they will be
+#printing on perforated paper and guide lines would therefore
+#not be needed.
+lines = True
+
+#If the user does not wish the size of the images to be increased
+#so as to fit within the available space, the "no_size_increase"
+#argument may be passed in when running the code.
+no_size_increase = False
+
+#The "number_of_frames" variable allows the user to specify
+#the minimum number of frames that the flipbook will contain.
+#Should the selected GIFS have less frames than "number_of_frames",
+#they will loop over until the required amount of frames has been reached.
+number_of_frames = None
+
+#If the user includes video files in the "GIF" folder,
+#they will typically want to select a subclip of that
+#video to convert into a flipbook. The default "start_time"
+#(time stamp at which the clip begins) is set to zero seconds
+#and the "end_time" (time stamp at which the video clip stops)
+#is "None" and these will be replaced by the time stamps included
+#in the name of the video file (if any). Should the user not specify
+#these, the first five seconds of the video will be converted into
+#a flipbook.
+start_time = 0
+end_time = None
+duration = 5
+
+#The default number of frames per second ("fps") is set to 25
+#and the user may select another number.
+fps = "25"
+
+if len(sys.argv) > 1:
+    #The "try/except" statement will
+    #intercept any "ValueErrors" and
+    #ask the users to correctly enter
+    #the desired values for the variables
+    #directly after the colon separating
+    #the variable name from the value.
+    try:
+        for i in range(1, len(sys.argv)):
+            if sys.argv[i][:7].strip().lower() == "border:":
+                border = math.floor(float(sys.argv[i][7:])*300)
+            elif sys.argv[i].strip().lower() in ["no_lines", "no_lines:"]:
+                lines = False
+            elif sys.argv[i].strip().lower() in ["no_size_increase", "no_size_increase"]:
+                no_size_increase = True
+            elif sys.argv[i][:17].strip().lower() == "number_of_frames:":
+                number_of_frames = int(sys.argv[i][17:])
+            elif sys.argv[i][:4].strip().lower() == "fps:":
+                fps = sys.argv[i][4:].strip()
+
+
+    except Exception as e:
+        print(e)
+        sys.exit('\nPlease specify the non-printable border (in inches and decimal form, but without units) ' +
+        'precedec by the "border:" argument. Also, you may pass in the "no_lines" argument should you not ' +
+        'wish to have guides to cut along the line when assembling your flipbook (if you are printing on ' +
+        'perforated paper, for instance). For example, for a 1/4 inch border and no guiding lines, you would ' +
+        'enter the following: "python3 gif2flipbook.py border:0.25 no_lines".\n')
+
 path_gifs = os.path.join(cwd, "GIFS", "*.*")
 #The list returned by "glob" is sorted, such that the prefix letters may be
 #assembled in sequence in the resulting list. For example: "['a-name-1.gif', 'A-name-2.gif',
@@ -16,62 +90,89 @@ path_gifs = os.path.join(cwd, "GIFS", "*.*")
 #where GIFS sharing a letter would feature on flip sides of the same quadrant of the sheet of paper.
 gif_files = sorted(glob.glob(path_gifs), key=str.lower)
 
-print("\nCurrently doing preliminary processing of " + str(len(gif_files)) + " GIF files:\n")
-
 if len(gif_files) > 0 and len(gif_files) <= 8:
-    #The default non-printable border at the top and bottom
-    #of the page is set to a quarter inch (or rather the
-    #corresponding number of pixels, 75 px)
-    border = math.floor(0.25*300)
 
-    #The frame number i+1 from the "for i in range(maximum_frame_number):" loop
-    #is printed in the top of each quadrant in order to facilitate flipbook assembly.
-    numbers_font = ImageFont.truetype(os.path.join(cwd, "baskvl.ttf"), 60)
+    #The files within the "GIF" folder are checked to see
+    #whether they are of the same type as some of the most
+    #common animated image formats ("gif", "webp", "apng",
+    #"avif", "flif" and "mng"). If not, the "try, except"
+    #statement below attempts to convert the presumed
+    #video files into "WebP" format using ffmpeg.
+    for i in range(len(gif_files)):
+        file_path_split = gif_files[i].split(".")
+        file_extension = file_path_split[-1].lower()
+        webp_file_path = "".join(file_path_split[:-1]) + ".webp"
+        if file_extension not in ["gif", "webp", "apng", "avif", "flif", "mng"]:
 
-    #By default, central horizontal and vertical lines will
-    #divide every sheet of paper in four even parts to facilitate
-    #cutting the pages after printing. The user can pass in the
-    #argument "no_lines" when running the code if they will be
-    #printing on perforated paper and guide lines would therefore
-    #not be needed.
-    lines = True
+            try:
+                #Should the user wish to only convert a clip of the video
+                #into a flipbook, they must specify the starting and ending
+                #point of the clip by including them within parentheses.
+                #The numer of hours, minutes and seconds need to be separated
+                #by hyphens within these parentheses. For example, a clip of a MP4
+                #video starting at 1 hour 35 minutes and 5 seconds and ending at 1
+                #hour 35 minutes and 10 seconds would have the following
+                #parentheses: "A-videoname-(1-35-5)(1-35-10).mp4"
+                #The regex expression below (r"[(]([\d|-]+)[)]") only retains
+                #the contents of every parentheses in the file name. The users
+                #should then refrain from using parentheses other than when
+                #indicating the starting and ending points of the subclips.
+                start_end = re.findall(r"[(]([\d|-]+)[)]", gif_files[i])
 
-    #If the user does not wish the size of the images to be increased
-    #so as to fit within the available space, the "no_size_increase"
-    #argument may be passed in when running the code.
-    no_size_increase = False
+                #If there is more than one set of parentheses in the file name,
+                #it likely means that the user has specified a starting and ending
+                #point to the subclip. They are then sorted (just in case the user
+                #has accidentally provided the stopping point before the starting point)
+                #and then each of them are split along hyphens to determine the number of
+                #hours, minutes and seconds that each time point corresponds to. These are
+                #then converted into seconds.
+                if len(start_end) > 1:
+                    start_end.sort()
+                    if "-" in start_end[0]:
+                        start_time = [element.strip() for element in start_end[0].split("-")]
+                        if len(start_time) > 2:
+                            start_time = int(start_time[0])*3600 + int(start_time[1])*60 + int(start_time[2])
+                        else:
+                            start_time = int(start_time[0])*60 + int(start_time[1])
+                    else:
+                        start_time = int(start_end[0])
 
-    #The "number_of_frames" variable allows the user to specify
-    #the minimum number of frames that the flipbook will contain.
-    #Should the selected GIFS have less frames than "number_of_frames",
-    #they will loop over until the required amount of frames has been reached.
-    number_of_frames = None
+                    if "-" in start_end[1]:
+                        end_time = [element.strip() for element in start_end[1].split("-")]
+                        if len(end_time) > 2:
+                            end_time = int(end_time[0])*3600 + int(end_time[1])*60 + int(end_time[2])
+                        else:
+                            end_time = int(end_time[0])*60 + int(end_time[1])
+                    else:
+                        end_time = int(start_end[1])
 
-    if len(sys.argv) > 1:
-        #The "try/except" statement will
-        #intercept any "ValueErrors" and
-        #ask the users to correctly enter
-        #the desired values for the variables
-        #directly after the colon separating
-        #the variable name from the value.
-        try:
-            for i in range(1, len(sys.argv)):
-                if sys.argv[i][:7].strip().lower() == "border:":
-                    border = math.floor(float(sys.argv[i][7:])*300)
-                elif sys.argv[i].strip().lower() in ["no_lines", "no_lines:"]:
-                    lines = False
-                elif sys.argv[i].strip().lower() in ["no_size_increase", "no_size_increase"]:
-                    no_size_increase = True
-                elif sys.argv[i][:17].strip().lower() == "number_of_frames:":
-                    number_of_frames = int(sys.argv[i][17:])
+                    #The duration of the subclip is determined as the difference
+                    #between the "end_time" and "start_time".
+                    duration = end_time - start_time
 
-        except Exception as e:
-            print(e)
-            sys.exit('\nPlease specify the non-printable border (in inches and decimal form, but without units) ' +
-            'precedec by the "border:" argument. Also, you may pass in the "no_lines" argument should you not ' +
-            'wish to have guides to cut along the line when assembling your flipbook (if you are printing on ' +
-            'perforated paper, for instance). For example, for a 1/4 inch border and no guiding lines, you would ' +
-            'enter the following: "python3 gif2flipbook.py border:0.25 no_lines".\n')
+                #Should the user only have provided a starting point or and ending point (and not both),
+                #The following error message is provided.
+                elif len(start_end) == 1:
+                    sys.exit('\nPlease specify both and start time and end time for your videoclip ' +
+                    'by enclosing them within parentheses in your file name. The hours, seconds and ' +
+                    'minutes need to be separated by a hyphen. \nFor example, a video clip starting at ' +
+                    '1 hour 35 minutes and 5 seconds and ending at 1 hour 35 minutes and 10 seconds would ' +
+                    'have the following parentheses: "A-videoname-(1-35-5)(1-35-10).mp4"')
+
+                #The ffmpeg command is issued using the "os.system()" method to convert the videoclip into WebP format.
+                os.system("ffmpeg" + (" -ss " + str(start_time) + " -t " + str(duration)) + " -i " + "'" + gif_files[i]
+                + "'" + " -vcodec libwebp " + "-filter:v fps=fps=" + fps + " -lossless 1 -loop 1 -preset default " +
+                "-an -sn -vsync 0 " + "'" + webp_file_path + "'")
+                #The original video path within the "gif_files[i]" is then replaced with that
+                #of the corresponding WebP file.
+                gif_files[i] = webp_file_path
+
+            except:
+                sys.exit(file_extension + " files are not supported by this application." +
+                " Please use another file format such as GIF, WebP or MP4.")
+
+    print("\nCurrently doing preliminary processing of " + str(len(gif_files)) + " animation " +
+    ("files")*(len(gif_files) > 1) + ("file")*(len(gif_files) == 1) + ":\n")
 
     #The GIF file names are extracted from the paths when splitting along the backslash or forward
     #slash path dividers and selecting for the last element, and then spitting it along the periods
@@ -126,7 +227,7 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
     #the users to select GIFS of similar lengths for making flipbooks,
     #although this isn't striclty necessary, as the shorter GIFS will
     #simply be looped over until the "maximum_frame_number" is reached.
-    print("\n\nHere is the number of frames in your GIFS:\n")
+    print("\n\nHere is the number of frames in your animated files:\n")
     for i in range(len(gif_names)):
         print("- " + gif_names[i] + ": " + str(gif_number_of_frames[i]))
 
@@ -139,15 +240,18 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
     #in order to add the PNG frame indices, up to the last index within
     #a given GIF, upon which it starts again at frame zero.
     #The list "gif_indices_repeat" (initialized at index zero
-    #for each GIF) stores the current PNG frame indices.
+    #for each GIF) stores the current PNG frame indices. The
+    #"gif_indices_repeat[i]" is added to the "png_index_list[-1]" list
+    #in reverse order to make up for the fact that the first frame of
+    #a flipbook is located at the bottom of it.
     for i in range(len(gif_png_paths)):
         png_index_list.append([])
         for j in range(maximum_frame_number):
             if gif_indices_repeat[i] < len(gif_png_paths[i])-1:
-                png_index_list[-1].append(gif_indices_repeat[i])
+                png_index_list[-1] = [gif_indices_repeat[i]] + png_index_list[-1]
                 gif_indices_repeat[i] += 1
             else:
-                png_index_list[-1].append(gif_indices_repeat[i])
+                png_index_list[-1] = [gif_indices_repeat[i]] + png_index_list[-1]
                 if gif_indices_repeat[i] < len(gif_png_paths[i])-1:
                     gif_indices_repeat[i] += 1
                 else:
@@ -155,13 +259,13 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
 
     #If the user has included more than four GIFS within the "GIFS" subfolder
     #of the working folder, then the PNG frame indices within "png_index_list"
-    #for even-numbered GIFS will be reversed, as they GIFS will be printed on
+    #for odd-numbered GIFS will be reversed, as they GIFS will be printed on
     #both sides of the sheet of paper. That is to say that the GIFS on the two
     #sides of the page are progressing in opposite directions, as the flip book
     #needs to be "flipped" in order to watch the animation on the other side.
     if len(gif_files) > 4:
         for i in range(len(png_index_list)):
-            if i%2 == 0:
+            if i%2 != 0:
                 png_index_list[i] = png_index_list[i][::-1]
 
     print("\n\nCurrently generating a PDF document with a total of " + str(maximum_frame_number) + " frames.\n")
@@ -298,10 +402,13 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
             #writing directly on "blank_canvas" and "blank_canvas_reverse", since two of the
             #numbers need to be flipped.
             def text_image(number, numbers_font):
-                page_number_size = numbers_font.getsize(str(number))
+                page_number_box = numbers_font.getbbox(str(number))
+                page_number_size = [math.floor((page_number_box[2]-page_number_box[0])*2),
+                math.floor((page_number_box[3]-page_number_box[1])*2)]
                 page_number_text = Image.new('RGBA', page_number_size, (255, 255, 255, 0))
                 page_number_text_editable = ImageDraw.Draw(page_number_text)
-                page_number_text_editable.text((0,0), str(number), font=numbers_font, fill="LightSlateGrey")
+                page_number_text_editable.text((math.floor(page_number_size[0]/2), math.floor(page_number_size[1]/2)),
+                str(number), font=numbers_font, fill="LightSlateGrey", anchor="mm")
                 return page_number_text, page_number_size
 
             #The number text images are pasted onto "blank_canvas" in the top of each flipbook page,
