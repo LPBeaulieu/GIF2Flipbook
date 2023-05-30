@@ -83,7 +83,7 @@ Depending on the number of frames of your animations, it may take several minute
 
 - Two orthogonal central lines are drawn on one side of every sheet of paper to facilitate cutting the pages when you are assembling your flipbook. Make sure to line up the pages nicely along the precut edges (long and short sides of the 8 1/2 by 11 inch pages) so that the flipbook's pages flip smoothly. Should you be using perforated printing paper, effectively dispensing you from needing to use scissors, you could remove these lines by passing in the "no_lines" argument when running the code.
 
-- Make sure that you include a space in-between arguments, and that you place each argument within quotes when running the Python code (for example: py gif2flipbook.py "border:0.5" "number_of_frames:100" "no_lines".   
+- Make sure that you include a space in-between arguments, and that you place each argument within quotes when running the Python code (for example: py gif2flipbook.py "border:0.5" "number_of_frames:100" "no_lines").   
 
 - Flipbook page numbers are provided to help you assemble the flipbooks. Please keep in mind that the first page should be at the bottom of the flipbook, facing up, as it is the first frame that you will see when flipping the pages.
 
