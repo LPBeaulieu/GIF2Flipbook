@@ -67,7 +67,7 @@ py -m pip install alive-progress
 <b>Step 5</b>- You're now ready to use <b>GIF2Flipbook</b>! 🎉
 
 ## 🎈 Usage <a name="usage"></a>
-- As mentioned above, videos may also be converted into flipbooks. It is recommended to either select very short videos (less than 10 seconds) or a subclip of your favorite scene, as the number of frames adds up very quickly the longer the animation is. The default number of frames per second is set to 25 fps, and you can change it by inputting the fps of your choosing after the "fps:" argument when running the code. Should you only wish to convert a subclip of a video into a flipbook, you would then need to specify the starting and ending points of the clip by including them within parentheses in the video file name. The number of hours, minutes and seconds need to be separated by hyphens within these parentheses. For example, a MP4 video starting at 1 hour 35 minutes and 5 seconds and ending at 1 hour 35 minutes and 10 seconds would have the following file name (note the parentheses): "A-YourVideoName-(1-35-5)(1-35-10).mp4". As such, you should refrain from using parentheses in the file names, other than when indicating the starting and ending points of the subclips.
+- As mentioned above, videos may also be converted into flipbooks and typically give more reliable results, as they likely have a high number of frames per second (fps). It is recommended to either select very short videos (less than 10 seconds, ideally five seconds) or a subclip of your favorite scene, as the number of frames adds up very quickly the longer the animation is. The default number of frames per second is set to 25 fps, and you can change it by inputting the fps of your choosing after the "fps:" argument when running the code. Should you only wish to convert a subclip of a video into a flipbook, you would then need to specify the starting and ending points of the clip by including them within parentheses in the video file name. The number of hours, minutes and seconds need to be separated by hyphens within these parentheses. For example, a MP4 video starting at 1 hour 35 minutes and 5 seconds and ending at 1 hour 35 minutes and 10 seconds would have the following file name (note the parentheses): "A-YourVideoName-(1-35-5)(1-35-10).mp4". As such, you should refrain from using parentheses in the file names, other than when indicating the starting and ending points of the subclips.
 
 - Simply place between 1 and 8 animation files that you wish to convert into flipbooks into the "GIFS" subfolder within your working folder and enter the following in the Powershell within your working folder:
 ```
@@ -76,6 +76,11 @@ py gif2flipbook.py
 Depending on the number of frames of your animations, it may take several minutes for the code to generate your PDF file, which may be very large in size.  
 
 - The animation with the maximal number of frames will be selected to determine the numbert of pages in the PDF document, with the shorter animations looping over and over until the longest one completes. You can also input the number of frames that you wish the flipbooks to contain if you want a truncated or prolonged flipbook. Simply pass in the number of frames after the "number_of_frames:" argument when running the code.
+
+- <b>For best results, generate flipbooks from 5 second video clips, with an fps of 25 and a "number_of_frames" of 250<\b>. This way, the animation will loop over twice (5 seconds x 25 frames per second = 125 frames), ensuring that you get good results when using the flipbook, as it can be difficult to flick the pages smoothly towards the end of the fipbook:
+```
+py gif2flipbook.py "fps:25" "number_of_frames:250"
+```
 
 - The size of the border (default of 0.25 inch) may be changed to another value. Simply pass in the number of inches (in decimal form and without units) after the "border:" argument. For borderless printing, enter "border:0" when running the code.
 
