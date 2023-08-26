@@ -77,7 +77,7 @@ Depending on the number of frames of your animations, it may take several minute
 
 - The animation with the maximal number of frames will be selected to determine the numbert of pages in the PDF document, with the shorter animations looping over and over until the longest one completes. You can also input the number of frames that you wish the flipbooks to contain if you want a truncated or prolonged flipbook. Simply pass in the number of frames after the "number_of_frames:" argument when running the code.
 
-- <b>For best results, generate flipbooks from 5 second video clips, with an fps of 25 and a "number_of_frames" of 250<\b>. This way, the animation will loop over twice (5 seconds x 25 frames per second = 125 frames), ensuring that you get good results when using the flipbook, as it can be difficult to flick the pages smoothly towards the end of the fipbook:
+- <b>For best results, generate flipbooks from 5 second video clips, with an fps of 25 and a "number_of_frames" of 250</b>. This way, the animation will loop over twice (5 seconds x 25 frames per second = 125 frames), ensuring that you get good results when using the flipbook, as it can be difficult to flick the pages smoothly towards the end of the fipbook:
 ```
 py gif2flipbook.py "fps:25" "number_of_frames:250"
 ```
