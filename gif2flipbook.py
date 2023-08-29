@@ -1,14 +1,21 @@
+#Things to test:
+#1- Allow for some Videos and GIFS to be in 3d and others not
+#2- Some animations with red on the right
+#3- Some animations with more than 15 px in-between channels
+#4- Some animations with different brightness (less than 60%)
+#5- Run the same tests on Windows
+
 from alive_progress import alive_bar
 import cv2
+from datetime import date
 import glob
 import math
 import numpy as np
 import os
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageEnhance
 import re
 import shutil
 import sys
-
 
 cwd = os.getcwd()
 #The default non-printable border at the top and bottom
@@ -51,6 +58,44 @@ number_of_frames = None
 start_time = 0
 end_time = 5
 
+#Should all flipbooks need to be generated in 3d anaglyph format, you can pass in the "3d" argument
+#when running the code and "three_dee_flipbooks" will be set to "True". The default number of
+#pixels in-between the red and cyan channels is set to 15 pixels, with the cyan layer on the
+#right. Should you like to change the number of horizontal pixels in-between the red and cyan
+#channels for all of the anaglyph flipbooks, you would need to pass in the number of pixels
+#after the "3d" argument, preceded by a colon. For example, "3d:30" would generate anaglyph
+#flipbooks with 30 pixels in-between the red and cyan channels, with the cyan layer on
+#the right. To have the red layer be on the right side of the anaglyph frames for all 3D
+#flipbooks, simply add "r" after the number (ex: "3d:30r"). You may also decide to only
+#have selected animations rendered in 3d anaglyph format (or only certain animations with
+#the red layer on the right) by including the parenthesized number of pixels in-between
+#the red and cyan layers, in addition to "r" (red) or "b" (blue) designating which layer
+#will be found on the right end of the anaglyph frames for this animation
+#(ex: "my_video (5)(10)(30r).mp4" would generate a subclip spanning the timestamps of 5 to 10 seconds of
+#that animation in anaglyph format, with 30 pixels in-between the red and cyan layers, with the red
+#channel being on the right of the frames.
+three_dee_flipbooks = False
+red_right = False
+pixels_between_red_cyan = 15
+
+#Flipbooks that are to be rendered in anaglyph 3D format may need to have their
+#frames brightened, as anaglyph images appear darker than regular frames. You may
+#specify a brightening ratio (inputted in percent form) specifically for a given
+#animation in its file name (parenthesized and followed by a percent symbol).
+#In addition to this, a brightening ratio may be specified for all animations other than
+#those that have a brightening ratio in their file name, by passing in the percent value after
+#the "brighten:" argument (example "brighten:50%" would brighten the frames by 50%, while -50%
+#would darken the frames by 50%).
+
+#By default, the extracted frames of the animations are not brightened in
+#creating the flipbooks. You may specify a brightening value applied to all
+#frames of all animations by passing in the percentage value after the "brighten:"
+#argument (ex: "brighten:70%" to brighten all frames of all animations by 70%),
+#or indicate the brightening value for a specific animation in its file name
+#(ex: "my_animation (-40%).gif", in which case this specific animation would be
+#darkened by 40%, the darkening being a result of the negative sign).
+brighten_percent = None
+
 #The default number of frames per second ("fps") is set to 25
 #and the user may select another number. The minimum between
 #the actual fps of the video and the value of "fps" will be selected,
@@ -76,6 +121,36 @@ if len(sys.argv) > 1:
                 number_of_frames = int(sys.argv[i][17:])
             elif sys.argv[i][:4].strip().lower() == "fps:":
                 fps = sys.argv[i][4:].strip()
+            elif sys.argv[i][:9].strip().lower() == "brighten:":
+                brighten_percent = int(sys.argv[i][9:].replace("%", "").strip())/100
+            #Should all flipbooks need to be generated in 3d anaglyph format, you can pass in the "3d" argument
+            #when running the code and "three_dee_flipbooks" will be set to "True". The default number of
+            #pixels in-between the red and cyan channels is set to 15 pixels, with the cyan layer on the
+            #right. Should you like to change the number of horizontal pixels in-between the red and cyan
+            #channels for all of the anaglyph flipbooks, you would need to pass in the number of pixels
+            #after the "3d" argument, preceded by a colon. For example, "3d:30" would generate anaglyph
+            #flipbooks with 30 pixels in-between the red and cyan channels, with the cyan layer on
+            #the right. To have the red layer be on the right side of the anaglyph frames for all 3D
+            #flipbooks, simply add "r" after the number (ex: "3d:30r"). You may also decide to only
+            #have selected animations rendered in 3d anaglyph format (or only certain animations with
+            #the red layer on the right) by including the parenthesized number of pixels in-between
+            #the red and cyan layers, in addition to "r" (red) or "b" (blue) designating which layer
+            #will be found on the right end of the anaglyph frames for this animation
+            #(ex: "my_video (5)(10)(30r).mp4" would generate a subclip spanning the timestamps of 5 to 10 seconds of
+            #that animation in anaglyph format, with 30 pixels in-between the red and cyan layers, with the red
+            #channel being on the right of the frames.
+            elif sys.argv[i][:].strip().lower()[:2] == "3d":
+                three_dee_flipbooks = True
+                three_dee_split = [element for element in sys.argv[i].strip().lower().split(":") if element != ""]
+                if len(three_dee_split) > 1:
+                    pixels_between_red_cyan = int(re.findall(r"[\d]+", three_dee_split[1])[0])
+                    if "r" in three_dee_split[1]:
+                        #The variable "red_right" will have the red channel be on the right end of the anaglyph
+                        #frames for all of the 3d flipbook animations. Otherwise, the default value of "red_right"
+                        #is initialized to "False", meaning that the cyan layer is on the right.
+                        red_right = True
+
+
     except Exception as e:
         print(e)
         sys.exit('\nPlease specify the non-printable border (in inches and decimal form, but without units) ' +
@@ -97,9 +172,11 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
     #slash path dividers and selecting for the last element, and then spitting it along the periods
     #and selecting the first resulting element to remove the extension. It is important that the
     #GIF file names do not contain any special characters (only letters and no spaces).
-    gif_names = [re.split(r"/|\\", gif_files[i])[-1].split(".")[0] for i in range(len(gif_files))]
 
-    print("\nCurrently doing preliminary processing of " + str(len(gif_files)) + " animation " +
+    gif_names = [re.split(r"/|\\", gif_files[i])[-1] for i in range(len(gif_files))]
+    gif_names = [re.split(r"([.])", gif_names[i])[:-2][0] for i in range(len(gif_names))]
+
+    print("\nCurrently analyzing " + str(len(gif_files)) + " animation " +
     ("files")*(len(gif_files) > 1) + ("file")*(len(gif_files) == 1) + ":\n")
 
     with alive_bar(len(gif_files)) as bar:
@@ -113,14 +190,92 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
         #"gif_png_paths".
         gif_png_paths = []
 
-        #The files within the "GIF" folder are checked to see
-        #whether they are of the same type as some of the most
-        #common animated image formats ("gif", "webp", "apng",
-        #"avif", "flif" and "mng"). If not, the "try, except"
-        #statement below attempts extract the frames of the
-        #video within the "start_time" and "end_time"
-        #timestamps and save them as PNG images.
+        #The list "list_three_dee" will keep track of which animations are to be rendered in anaglyph
+        #flipbook format.
+        list_three_dee = []
+
+        #The list "list_brighten_percent" will be populated with the brightening ratio
+        #for each animation, whether it be derived from its file name (which overrides
+        #any other default or user-defined value) or from the "brighten:" argument
+        #when running the code, or the default value of "None".
+        list_brighten_percent = []
+
+        #The list "frame_durations" will either contain an integer value of the millisecond duration of each frame
+        #for video animations (1/fps*1000) or the list of individual millisecond durations for each frames of
+        #an animated image such as GIFS. This will allow to extract the frames from the videos and to generate
+        #anaglyph GIF previews of the 3D flipbooks.
+        frame_durations = []
+
+        #The list "list_red_right" will keep track of which anaglyph animations have the red channel
+        #on the right side. The list "list_pixels_between_red_cyan" will keep tabs on the number of pixels
+        #in-between the red and cyan channels in the anaglyph frames for each animation.
+        list_red_right = []
+        list_pixels_between_red_cyan = []
+
         for i in range(len(gif_files)):
+            #Similarly, the presence of the number of horizontal pixels in-between the red and cyan channels
+            #of the anaglyph frames found within the file names will be determined here.
+            #The regex expression r"[(](3d[:]?[ ]?[r|b]?[ ]?[\d+]?[ ]?[r|b]?)[)]"' matches "3d" plus an optional colon and space,
+            #followed by the optional presence of "r" (red) or "b" (blue or cyan) designating which color will be present
+            #on the right of the anaglyph frame, with the number of horizontal pixels ([\d]+) in-between the red and cyan channels.
+            #These values are appended in the list "list_brighten_percent".
+            current_file_name_pixels_between_red_cyan = re.findall(r"[(](3d[:]?[ ]?[r|b]?[ ]?[\d+]?[ ]?[r|b]?)[)]", gif_names[i].lower())
+            if current_file_name_pixels_between_red_cyan != []:
+                list_three_dee.append(True)
+                #Here only the digits are retained in the "re.findall", as only "[\d]" is parenthesized, as opposed to the above regex
+                #expression, which includes "r" or "b"), in order to append the integer value of the number of pixels in-between the red and cyan channels.
+                #Also, the "^d" is included in the regex expression to prevent "3" in "3d" from overriding the value of "pixels_between_red_cyan" for
+                #this animation, as you can choose to only include "(3d)" in the animation file name to indicate that this animation is to be
+                #rendered in anaglyph format with the default number of pixels between the red and cyan channels of 15, with the cyan layer
+                #being on the right side.
+                pixels_between_red_cyan_hits = re.findall(r"[r|b]?[ ]?([\d]+)^d[ ]?[r|b]?", current_file_name_pixels_between_red_cyan[0])
+                if pixels_between_red_cyan_hits != []:
+                    list_pixels_between_red_cyan.append(int(pixels_between_red_cyan_hits[0]))
+                else:
+                    list_pixels_between_red_cyan.append(pixels_between_red_cyan)
+
+                #If "r" is present in "current_file_name_pixels_between_red_cyan[0]", it means that the red channel will
+                #be located on the right of the anaglyph frames, and "True" will be appended to the list "list_red_right" for this animation.
+                #Otherwise, the default color for the right layer is cyan, and "False" will be appended to "list_red_right".
+                if "r" in current_file_name_pixels_between_red_cyan[0]:
+                    list_red_right.append(True)
+                else:
+                    list_red_right.append(False)
+            elif three_dee_flipbooks:
+                list_pixels_between_red_cyan.append(pixels_between_red_cyan)
+                list_red_right.append(red_right)
+                list_three_dee.append(True)
+            else:
+                list_three_dee.append(False)
+                #"None" needs to be appended to the lists
+                #"list_pixels_between_red_cyan" and "list_red_right"
+                #even if the animation is not to be generated in anaglyph
+                #format, so that the indexing of this list works well for
+                #the ones that are to be made into 3D flipbooks.
+                list_pixels_between_red_cyan.append(None)
+                list_red_right.append(None)
+
+            #The presence of brightening percent values within the file names will be determined here,
+            #and these values are appended in the list "list_brighten_percent". 'r"[(]([-]?[\d]+)[ ]?%[)]"'
+            #means that only the digits will be retained (parenthesized in the regex expression, preceded
+            #or not by a negative sign). If no brightening value was supplied in the file name
+            #(which would override any default values for that file), then either the default
+            #brightening value of "brighten_percent" of "None", or any other value specified
+            #by the user after the "brighten:" argument when running the code will be
+            #appended to the "list_brighten_percent" for that animation.
+            current_file_brighten_percent = re.findall(r"[(]([-]?[\d]+)[ ]?%[)]", gif_names[i].lower())
+            if current_file_brighten_percent != []:
+                list_brighten_percent.append(int(current_file_brighten_percent[0])/100)
+            else:
+                list_brighten_percent.append(brighten_percent)
+
+            #The files within the "GIF" folder are checked to see
+            #whether they are of the same type as some of the most
+            #common animated image formats ("gif", "webp", "apng",
+            #"avif", "flif" and "mng"). If not, the "try, except"
+            #statement below attempts extract the frames of the
+            #video within the "start_time" and "end_time"
+            #timestamps and save them as PNG images.
             file_path_split = gif_files[i].split(".")
             file_extension = file_path_split[-1].lower()
             gif_files_extensions.append(file_extension)
@@ -137,27 +292,29 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
                     #into a flipbook, they must specify the starting and ending
                     #point of the clip by including them within parentheses.
                     #The numer of hours, minutes and seconds need to be separated
-                    #by hyphens within these parentheses. For example, a clip of a MP4
+                    #by colons within these parentheses. For example, a clip of a MP4
                     #video starting at 1 hour 35 minutes and 5 seconds and ending at 1
                     #hour 35 minutes and 10 seconds would have the following
-                    #parentheses: "A-videoname-(1-35-5)(1-35-10).mp4"
+                    #parentheses: "A-videoname-(1:35:5)(1:35:10).mp4"
                     #The regex expression below (r"[(]([\d|-]+)[)]") only retains
                     #the contents of every parentheses in the file name. The users
                     #should then refrain from using parentheses other than when
-                    #indicating the starting and ending points of the subclips.
-                    start_end = re.findall(r"[(]([\d|-]+)[)]", gif_files[i])
+                    #indicating the starting and ending points of the subclips and
+                    #the number of pixels in-between the cyan and red channels of
+                    #anaglyph frames.
+                    start_end = re.findall(r"[(]([\d|:]+)[)]", gif_names[i])
 
-                    #If there is more than one set of parentheses in the file name,
-                    #it likely means that the user has specified a starting and ending
+                    #If there is more than one set of parenthesized expression containing
+                    #only digits, it means that the user has supplied a staring and ending
                     #point to the subclip. They are then sorted (just in case the user
                     #has accidentally provided the stopping point before the starting point)
-                    #and then each of them are split along hyphens to determine the number of
+                    #and then each of them are split along colons to determine the number of
                     #hours, minutes and seconds that each time point corresponds to. These are
                     #then converted into seconds.
                     if len(start_end) > 1:
                         start_end.sort()
-                        if "-" in start_end[0]:
-                            start_time = [element.strip() for element in start_end[0].split("-")]
+                        if ":" in start_end[0]:
+                            start_time = [element.strip() for element in start_end[0].split(":")]
                             if len(start_time) > 2:
                                 start_time = int(start_time[0])*3600 + int(start_time[1])*60 + int(start_time[2])
                             else:
@@ -165,35 +322,37 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
                         else:
                             start_time = int(start_end[0])
 
-                        if "-" in start_end[1]:
-                            end_time = [element.strip() for element in start_end[1].split("-")]
+                        if ":" in start_end[1]:
+                            end_time = [element.strip() for element in start_end[1].split(":")]
                             if len(end_time) > 2:
-                                end_time = int(end_time[0])*3600 + int(end_time[1])*60 + int(end_time[2])
+                                #1 second is subtracted from the total amount of seconds to make the interval exclusive of the "end_time"
+                                end_time = int(end_time[0])*3600 + int(end_time[1])*60 + int(end_time[2])-1
                             else:
-                                end_time = int(end_time[0])*60 + int(end_time[1])
+                                end_time = int(end_time[0])*60 + int(end_time[1])-1
                         else:
-                            end_time = int(start_end[1])
+                            end_time = int(start_end[1])-1
 
                     #Should the user only have provided a starting point or and ending point (and not both),
                     #The following error message is provided.
                     elif len(start_end) == 1:
                         sys.exit('\nPlease specify both and start time and end time for your videoclip ' +
                         'by enclosing them within parentheses in your file name. The hours, seconds and ' +
-                        'minutes need to be separated by a hyphen. \nFor example, a video clip starting at ' +
+                        'minutes need to be separated by a colon. \nFor example, a video clip starting at ' +
                         '1 hour 35 minutes and 5 seconds and ending at 1 hour 35 minutes and 10 seconds would ' +
-                        'have the following parentheses: "A-videoname-(1-35-5)(1-35-10).mp4"')
+                        'have the following parentheses: "A-videoname-(1:35:5)(1:35:10).mp4"')
 
                     #A "VideoCapture" object is instantiated.
                     video = cv2.VideoCapture(gif_files[i])
                     #The minimum number of frames per second between the default value of 25 (or the user-specified value)
                     #and the actual fps of the video is selected as the new value of "fps", as the video cannot have more
                     #frames than its fps would allow.
-                    video_frame_count = video.get(cv2.CAP_PROP_FRAME_COUNT)
+                    video_frame_count = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
                     video_fps = video.get(cv2.CAP_PROP_FPS)
-                    fps = min(fps, math.floor(video_frame_count/video_fps))
+                    fps = min(fps, video_fps)
+                    frame_durations.append(math.floor(1/fps*1000))
                     #The timestamps of the frames in-between the "start_time" and
                     #"end_time" are assembled in the list "frame_timestamps".
-                    frame_timestamps = np.arange(start_time, end_time, 1/fps).tolist()
+                    frame_timestamps = [start_time + x*1/fps for x in range((end_time-start_time+1)*fps)]
                     #The number of frames of the selected clip from the video is
                     #appended to the list "gif_number_of_frames". This needs to be
                     #done before the "for" loop below, given "frame_timestamps.pop(0)".
@@ -214,7 +373,8 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
                     #strings into integers.
                     gif_png_paths.append(sorted(glob.glob(path_pngs), key=lambda x:int(x.split("-")[-1].split(".")[0])))
 
-                except:
+                except Exception as e:
+                    print(str(e))
                     sys.exit(file_extension + " files are not supported by this application." +
                     " Please use another file format such as GIF, WebP or MP4.")
 
@@ -222,17 +382,29 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
                 #The individual frames of every GIF are exported as PNG images
                 #using the "Image.seek()" method to bring the GIF object to the
                 #frame number "j".
+                frame_durations.append([])
                 with Image.open(gif_files[i]) as gif_object:
-                    for j in range(gif_object.n_frames):
-                        gif_object.seek(j)
-                        gif_object.save(os.path.join(cwd, 'PNGS', gif_names[i], gif_names[i] + "-" + str(j) + '.png'))
-                    #The paths of the PNG files extracted from the GIFS are stored within the list "gif_png_paths".
-                    #As the paths are strings, they need to be sorted numerically using a lambda function that
-                    #splits the path strings along the hyphens, and indexing the last element, corresponding to
-                    #the suffix (ex: 0.gif), and then excluding the extension and converting the resulting
-                    #strings into integers.
-                    gif_png_paths.append(sorted(glob.glob(path_pngs), key=lambda x:int(x.split("-")[-1].split(".")[0])))
-                    gif_number_of_frames.append(gif_object.n_frames)
+                    try:
+                        for j in range(gif_object.n_frames):
+                            gif_object.seek(j)
+                            gif_object.save(os.path.join(cwd, 'PNGS', gif_names[i], gif_names[i] + "-" + str(j) + '.png'))
+                            #A "try/except" statement is needed here in case the file type does not have a "duration"
+                            #element (ex: webp files)
+                            try:
+                                frame_durations[-1].append(int(gif_object.info['duration']))
+                            except:
+                                pass
+                        #The paths of the PNG files extracted from the GIFS are stored within the list "gif_png_paths".
+                        #As the paths are strings, they need to be sorted numerically using a lambda function that
+                        #splits the path strings along the hyphens, and indexing the last element, corresponding to
+                        #the suffix (ex: 0.gif), and then excluding the extension and converting the resulting
+                        #strings into integers.
+                        gif_png_paths.append(sorted(glob.glob(path_pngs), key=lambda x:int(x.split("-")[-1].split(".")[0])))
+                        gif_number_of_frames.append(gif_object.n_frames)
+                    except Exception as e:
+                        print(str(e))
+                        sys.exit(file_extension + " files are not supported for 3D anaglyph flipbook generation." +
+                        " Please use another file format such as GIF or MP4.")
             bar()
 
     #The maximum number of frames for the longest
@@ -247,13 +419,36 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
     if number_of_frames and maximum_frame_number != number_of_frames:
         maximum_frame_number = number_of_frames
 
+    #The list "three_dee_animation_image_sequence" will contain the
+    #3D frames for each animation that will be used to create a GIF
+    #preview of the anaglyph animation.
+    three_dee_animation_image_sequence = []
+
     #The number of frames in every GIF is printed on screen to allow
     #the users to select GIFS of similar lengths for making flipbooks,
     #although this isn't striclty necessary, as the shorter GIFS will
     #simply be looped over until the "maximum_frame_number" is reached.
-    print("\n\nHere is the number of frames in your animated files:\n")
+    print("\n\nHere is the number of frames and number of frames per second (fps) in your animated files:\n")
     for i in range(len(gif_names)):
-        print("- " + gif_names[i] + ": " + str(gif_number_of_frames[i]))
+        #If the "frame_durations" at index "i" is a list, it means that
+        #it is a GIF, as the durations for each frame were extracted, as
+        #opposed to the frame duration of videos in milliseconds, which is
+        #equivalent to 1/fps*1000. The "frame_durations[i] != []" is because
+        #of the "try/except" statement above, in case the file type does not
+        #have a "duration" element (ex: webp files)
+        if isinstance(frame_durations[i], list) and frame_durations[i] != []:
+            animation_duration = sum(frame_durations[i])/1000
+            animation_fps = round(gif_number_of_frames[i]/animation_duration)
+        else:
+            animation_fps = round(1/frame_durations[i]*1000)
+        if frame_durations != []:
+            print("- " + gif_names[i] + ": " + str(gif_number_of_frames[i]) + " frames, with a fps of " + str(animation_fps))
+        else:
+            print("- " + gif_names[i] + ": " + str(gif_number_of_frames[i]) + " frames")
+        #A new empty list is appended for each animation, which will be
+        #populated later in the code with the 3d frames with the red and
+        #cyan channels separated by a certain number of pixels on the "x" axis.
+        three_dee_animation_image_sequence.append([])
 
     #The following nested "for" loops will populate the list
     #"png_index_list", which will determine when a shorter GIF
@@ -297,6 +492,15 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
         #The width and height of the resized PNG images will be stored in the
         #list "gif_dimensions".
         gif_dimensions = []
+        #The "unextended_gif_dimensions" will keep track of the original size of the frames
+        #for a given animation, resized in order to fit within the available space on a
+        #flipbook page. This will allow to crop the final anaglyph frames to remove the cyan
+        #and red edges resulting from staggered red and cyan channels.
+        #The "anaglyph_frame_dimensions" will factor in the extra pixels needed such that
+        #the cropped frames would be equivalent in dimension to those generated for a non-3D
+        #version of that animation.
+        unextended_gif_dimensions = []
+        anaglyph_frame_dimensions = []
         #The dictionary "image_layout" contains keys mapping to the GIF indices and
         #values containing the string equivalent of the expressions required to determine
         #the x,y coordinates of the upper-left corner of the resized PNG images that will
@@ -355,7 +559,27 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
                     #for the resized images will allow to position the images correctly on the flipbooks.
                     frame = frame.resize((math.floor(resize_factor*width), math.floor(resize_factor*height)))
                     width, height = frame.size
-                    gif_dimensions.append((width, height))
+
+                    if list_three_dee[j] == True:
+                        #If the flipbook will consist of anaglyph frames, the size needs to be scaled up to factor in
+                        #the fact that the split cyan/red frames will need to be cropped to remove the red and cyan edges.
+                        #The aspect ratio will allow to determine how many pixels to add to the height, so that the frames
+                        #will be scaled up while retaining the aspect ratio.
+                        aspect_ratio = height/width
+                        frame_width = width + list_pixels_between_red_cyan[j]
+                        height_pixel_adjustment = math.floor(list_pixels_between_red_cyan[j]*aspect_ratio)
+                        frame_height = height + height_pixel_adjustment
+                        gif_dimensions.append((frame_width, frame_height))
+                        unextended_gif_dimensions.append((width, height))
+                        anaglyph_frame_dimensions.append([frame_width + list_pixels_between_red_cyan[j], frame_height, height_pixel_adjustment])
+                    #"None" needs to be appended to the lists "anaglyph_frame_dimensions"
+                    #and "unextended_gif_dimensions" even if the animation is not to be
+                    #generated in anaglyph format, so that the indexing of this list works
+                    #well for the ones that are to be made into 3D flipbooks.
+                    else:
+                        anaglyph_frame_dimensions.append(None)
+                        unextended_gif_dimensions.append(None)
+                        gif_dimensions.append((width, height))
 
                 #Once all of the GIFS have had their resizing_factor determined, further
                 #iterations of the "for i in range(len(maximum_frame_number)):" loop will
@@ -376,14 +600,85 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
                 #following the sequence determined above within "png_index_list" that
                 #accounts for the shorter GIFS looping over (restarting at index zero),
                 #until reaching "maximum_frame_number".
-                frame_k = Image.open(os.path.join(gif_png_paths[j][png_index_list[j][i]]))
-                frame_k_editable = ImageDraw.Draw(frame_k)
+                frame_k = Image.open(os.path.join(gif_png_paths[j][png_index_list[j][i]])).convert("RGB")
 
                 #If "resize_factor" wasn't equal to one, it means that the PNG images for
                 #the given GIF needs to be resized according to the updated width and height
                 #values.
                 if resize_factor != 1:
-                    frame_k = frame_k.resize((width, height), resample=Image.Resampling.LANCZOS)
+                    frame_k = frame_k.resize(gif_dimensions[j], resample=Image.Resampling.LANCZOS)
+
+                #Flipbooks that are to be rendered in anaglyph 3D format may need to have their
+                #frames brightened, as anaglyph images appear darker than regular frames. You may
+                #specify a brightening ratio (inputted in percent form) specifically for a given
+                #animation in its file name (parenthesized and followed by a percent symbol).
+                #In addition to this, a brightening ratio may be specified for all animations other than
+                #those that have a brightening ratio in their file name, by passing in the percent value after
+                #the "brighten:" argument (example "brighten:50%" would brighten the frames by 50%, while -50%
+                #would darken the frames by 50%).
+
+                #By default, the extracted frames of the animations are not brightened in
+                #creating the flipbooks. You may specify a brightening value applied to all
+                #frames of all animations by passing in the percentage value after the "brighten:"
+                #argument (ex: "brighten:70%" to brighten all frames of all animations by 70%),
+                #or indicate the brightening value for a specific animation in its file name
+                #(ex: "my_animation (-40%).gif", in which case this specific animation would be
+                #darkened by 40%, the darkening being a result of the negative sign).
+                if list_brighten_percent[j] != None:
+                    brightener = ImageEnhance.Brightness(frame_k)
+                    #The "1 + list_brighten_percent[j]" enables the image to be brightened if the value
+                    #of list_brighten_percent[j] is positive (the sum being superior to one) and darkened
+                    #if the value of list_brighten_percent[j] is negative (the sum being inferior to one).
+                    frame_k = brightener.enhance(1+list_brighten_percent[j])
+
+                if list_three_dee[j] == True:
+                    #A new canvas larger on the horizontal axis than "frame_k" is created
+                    #to accomodate for the larger space required for both red and cyan
+                    #channels, which are staggered horizontally by a number of pixels equivalent to
+                    #list_pixels_between_red_cyan[j], with the position of the red frame being on the
+                    #right if list_red_right[j] == True.
+                    anaglyph_frame = Image.new("RGB", anaglyph_frame_dimensions[j][:2], (255,255,255))
+
+                    cyan_frame = frame_k.copy()
+                    cyan_frame = np.array(cyan_frame)
+                    #For the cyan frame, the "R" channel (channel index 0 for
+                    #every "y" and "x" coordinates in the numpy array of the image) is
+                    #converted to zero.
+                    cyan_frame[:,:,0] *=0
+                    #The numpy array is then converted back to a PIL image object.
+                    cyan_frame = Image.fromarray(cyan_frame)
+
+                    red_frame = frame_k.copy().convert("RGBA")
+                    red_frame.putalpha(127)
+                    red_frame = np.array(red_frame)
+                    #For the red frame, the "G" and "B" channels (channel indices 1 and 2 for
+                    #every "y" and "x" coordinates in the numpy array of the image) are
+                    #converted to zero.
+                    red_frame[:,:,1:3] *= 0
+                    red_frame = Image.fromarray(red_frame)
+
+                    if list_red_right[j] == False:
+                        #If list_red_right[j] == False, it means that the cyan channel needs to
+                        #be on the right, offset by list_pixels_between_red_cyan[j] pixels on the
+                        #"x" axis.
+                        anaglyph_frame.paste(cyan_frame, (list_pixels_between_red_cyan[j], 0))
+                        anaglyph_frame.paste(red_frame, (0, 0), red_frame)
+                    else:
+                        #The reverse is true if list_red_right[j] == True
+                        anaglyph_frame.paste(red_frame, (list_pixels_between_red_cyan[j], 0))
+                        anaglyph_frame.paste(cyan_frame, (0, 0), red_frame)
+
+                    #The red and cyan portions at the edges of the image are cropped out, with the
+                    #cropped frame now being equivalent in size to that of a non-anaglyph frame for
+                    #that animation.
+                    frame_k = anaglyph_frame.crop((list_pixels_between_red_cyan[j],
+                    math.floor(0.5*height_pixel_adjustment), list_pixels_between_red_cyan[j] + unextended_gif_dimensions[j][0],
+                    math.floor(0.5*height_pixel_adjustment) + unextended_gif_dimensions[j][1]))
+
+                    #The first sequence of each frame is appended to "three_dee_animation_image_sequence",
+                    #in order to generate the GIF preview of the anaglyph flipbook.
+                    if i == 0 or i > 0 and i < png_index_list[j][1:].index(0):
+                        three_dee_animation_image_sequence[j].append(frame_k)
 
                 #If there are four or less GIFS within the "GIFS" subfolder of the
                 #working folder, these will all be printed on the same side of the page,
@@ -462,22 +757,34 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
             #below, with the "append=True" option being selected for
             #the pages after the first one.
             if i == 0:
-                blank_canvas.save(os.path.join(cwd, "flipbook.pdf"),
+                pdf_path = os.path.join(cwd, str(date.today()) + " flipbook")
+
+                if not os.path.exists(pdf_path):
+                    os.makedirs(pdf_path)
+                blank_canvas.save(os.path.join(pdf_path, str(date.today()) + " flipbook.pdf"),
                 quality=100, resolution=300)
                 if len(gif_files) > 4:
-                    blank_canvas_reverse.save(os.path.join(cwd, "flipbook.pdf"),
+                    blank_canvas_reverse.save(os.path.join(pdf_path, str(date.today()) + " flipbook.pdf"),
                     append=True, quality=100, resolution=300)
 
             else:
-                blank_canvas.save(os.path.join(cwd, "flipbook.pdf"),
+                blank_canvas.save(os.path.join(pdf_path, str(date.today()) + " flipbook.pdf"),
                 append=True, quality=100, resolution=300)
                 if len(gif_files) > 4:
-                    blank_canvas_reverse.save(os.path.join(cwd, "flipbook.pdf"),
+                    blank_canvas_reverse.save(os.path.join(pdf_path, str(date.today()) + " flipbook.pdf"),
                     append=True, quality=100, resolution=300)
             bar()
 
     #Lastly, the "PNGS" folder containing the PNGs and its contents is deleted.
     shutil.rmtree(os.path.join(cwd, "PNGS"))
+
+    for i in range(len(gif_names)):
+        if list_three_dee[i] == True:
+            print("\nCurrently generating 3D anaglyph GIF for the animation entitled " + '"' + gif_names[i] + '".')
+            #The GIF is saved, with the "three_dee_animation_image_sequence" containing all of the frames, and "image_sequence_duration"
+            #listing their duration in milliseconds.
+            three_dee_animation_image_sequence[i][0].save(os.path.join(pdf_path, gif_names[i] + '.gif'), save_all=True,
+            append_images=three_dee_animation_image_sequence[i], duration = frame_durations[i], loop = 0)
 
 else:
     print("Please include between one and eight GIF files inclusively within the GIFS folder.")
