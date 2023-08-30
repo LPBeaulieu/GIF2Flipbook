@@ -18,7 +18,13 @@ This application lets you create up to eight flipbooks at a time from videos, GI
 
 <p align="left"> <b>GIF2Flipbook</b> is a tool enabling you to create up to eight flipbooks at a time from videos, GIFs and other animated image formats, such as WebP files. Simply place you files within the designated folder and run the code, and you will soon have a PDF document ready for printing! 
 
-A neat feature of this app is that you can "pair up" two different animations of your choosing on opposite sides of the flipbooks, so that you can continue on flippipng on the other side!
+A neat feature of this app is that you can "pair up" two different animations of your choosing on opposite sides of the flipbooks, so that you can continue on flippipng on the other side! Also, check out the 3D anaglyph flipbooks (and GIFS!) that you can generate with this app:
+<p align="center">
+  <img src="https://github.com/LPBeaulieu/GIF2Flipbook/blob/main/Pexels-Groovy-Grandma(0)(4).gif" alt="Dancing Groovy Grandma Anaglyph GIF" width="40%" height="40%"/>
+  
+</p>
+
+
 <br> 
 </p>
 
