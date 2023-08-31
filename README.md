@@ -8,9 +8,9 @@ This application lets you create up to eight flipbooks at a time from videos, GI
 <div align="center">
   
   [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPLv3.0-brightgreen.svg)](https://github.com/LPBeaulieu/GIF2Flipbook/blob/main/LICENSE)
-  [![Linux](https://svgshare.com/i/Zhy.svg)](https://svgshare.com/i/Zhy.svg)
-  [![macOS](https://svgshare.com/i/ZjP.svg)](https://svgshare.com/i/ZjP.svg)
-  [![Windows](https://svgshare.com/i/ZhY.svg)](https://svgshare.com/i/ZhY.svg)
+  ![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)
+  ![macOS](https://img.shields.io/badge/mac%20os-000000?style=for-the-badge&logo=macos&logoColor=F0F0F0)
+  ![Windows](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)
  
 </div>
 
@@ -18,7 +18,9 @@ This application lets you create up to eight flipbooks at a time from videos, GI
 
 <p align="left"> <b>GIF2Flipbook</b> is a tool enabling you to create up to eight flipbooks at a time from videos, GIFs and other animated image formats, such as WebP files. Simply place you files within the designated folder and run the code, and you will soon have a PDF document ready for printing! 
 
-A neat feature of this app is that you can "pair up" two different animations of your choosing on opposite sides of the flipbooks, so that you can continue on flippipng on the other side! Also, check out the 3D anaglyph flipbooks (and GIFS!) that you can generate with this app:
+A neat feature of this app is that you can "pair up" two different animations of your choosing on opposite sides of the flipbooks, so that you can continue on flippipng on the other side! 
+
+Also, check out the 3D anaglyph flipbooks (and GIFS!) that you can generate with this app:
 <p align="center">
   <img src="https://github.com/LPBeaulieu/GIF2Flipbook/blob/main/Pexels-Groovy-Grandma(0)(4).gif" alt="Dancing Groovy Grandma Anaglyph GIF" width="40%" height="40%"/>
   
@@ -73,13 +75,13 @@ py -m pip install alive-progress
 <b>Step 5</b>- You're now ready to use <b>GIF2Flipbook</b>! 🎉
 
 ## 🎈 Usage <a name="usage"></a>
-- As mentioned above, videos may also be converted into flipbooks and typically give more reliable results, as they likely have a high number of frames per second (fps). It is recommended to either select very short videos (less than 10 seconds, ideally five seconds) or a subclip of your favorite scene, as the number of frames adds up very quickly the longer the animation is. The default number of frames per second is set to 25 fps, and you can change it by inputting the fps of your choosing after the "fps:" argument when running the code. Should you only wish to convert a subclip of a video into a flipbook, you would then need to specify the starting and ending points of the clip by including them within parentheses in the video file name. The number of hours, minutes and seconds need to be separated by hyphens within these parentheses. For example, a MP4 video starting at 1 hour 35 minutes and 5 seconds and ending at 1 hour 35 minutes and 10 seconds would have the following file name (note the parentheses): "A-YourVideoName-(1-35-5)(1-35-10).mp4". As such, you should refrain from using parentheses in the file names, other than when indicating the additional parameters such as start and end timestamps, 3D anaglyph mode and brightening percentage values.
+- As mentioned above, videos may also be converted into flipbooks and typically give more reliable results, as they likely have a high number of frames per second (fps). It is recommended to either select very short videos (less than 10 seconds, ideally five seconds) or a subclip of your favorite scene, as the number of frames adds up very quickly the longer the animation is. The default number of frames per second is set to 25 fps, and you can change it by inputting the fps of your choosing after the "fps:" argument when running the code (ex: 'py gif2flipbook.py "fps:20"' for 20 frames per second). Should you only wish to convert a subclip of a video into a flipbook, you would then need to specify the starting and ending points of the clip by including them within parentheses in the video file name. The number of hours, minutes and seconds need to be separated by hyphens within these parentheses. For example, a MP4 video starting at 1 hour 35 minutes and 5 seconds and ending at 1 hour 35 minutes and 10 seconds would have the following file name (note the parentheses): "A-YourVideoName-(1-35-5)(1-35-10).mp4". As such, you should refrain from using parentheses in the file names, other than when indicating the additional parameters such as start and end timestamps, 3D anaglyph mode and brightening percentage values.
 
 - Simply place between 1 and 8 animation files that you wish to convert into flipbooks into the "GIFS" subfolder within your working folder and enter the following in the Powershell within your working folder:
 ```
 py gif2flipbook.py
 ```
-Depending on the number of frames of your animations, it may take several minutes for the code to generate your PDF file, which may be very large in size.  
+Depending on the number of frames of your animations, it may take several minutes for the code to generate your PDF file, which may be very large in size. The PDF document for your flipbook will be saved in a subfolder within your working folder, with the current date in the folder's name (ex: "2023-08-31 flipbook"). 
 
 - The animation with the maximal number of frames will be selected to determine the numbert of pages in the PDF document, with the shorter animations looping over and over until the longest one completes. You can also input the number of frames that you wish the flipbooks to contain if you want a truncated or prolonged flipbook. Simply pass in the number of frames after the "number_of_frames:" argument when running the code.
 
@@ -92,9 +94,22 @@ py gif2flipbook.py "fps:25" "number_of_frames:250"
 
 - The frames are automatically resized (either shrunk down or blown up) so that they could fit within the available space in every quadrant of the page. Should you not wish for their size to be increased, pass in the following argument when running the code: "no_size_increase".
 
+- The default resolution of the PDF file is set to 100 dpi to keep the generated file reasonable in size, but you may change this by passing in the "resolution:" argument, followed by the number of dpi (ex: 'py gif2flipbook.py "resolution:200"' would generate the PDF document with a resolution of 200 dpi). 
+
+- By default, the extracted frames of the animations are not brightened in creating the flipbooks. You may specify a brightening value applied to all frames of all animations by passing in the percentage value after the "brighten:"
+argument (ex: "brighten:20%" to brighten all frames of all animations by 20%), or indicate the brightening value for a specific animation in its file name (ex: "my animation (-10%).gif", in which case this specific animation would be
+darkened by 10%, the darkening being a result of the negative sign). Please note that the brightening value specified in the animation file name trumps any brightening value specified in the "brighten:" argument. For example, if you had eight animations and wished to brighten them all by 20%, but one of them was especially dark and needed to be brightened by 30%, you would run the code as follows: 'py gif2flipbook.py "brighten:20%" and the file name of the darkest animation would be along the lines of "my animation (30%).mp4". 
+
 - Two orthogonal central lines are drawn on one side of every sheet of paper to facilitate cutting the pages when you are assembling your flipbook. Make sure to line up the pages nicely along the precut edges (long and short sides of the 8 1/2 by 11 inch pages) so that the flipbook pages flip smoothly. Should you be using perforated printing paper, effectively dispensing you from needing to use scissors, you could then remove these lines by passing in the "no_lines" argument when running the code.
 
 - Make sure that you include a space in-between arguments, and that you place each argument within quotes when running the Python code (for example: py gif2flipbook.py "border:0.5" "number_of_frames:100" "no_lines").   
+
+- Here are some instructions on how to print 3D anaglyph flipbooks (you will require red-blue 3D glasses):
+  - Pass in the "3d" argument in order for the code to generate all of your flipbooks in 3d anaglyph format.
+  - To change the number of pixels in-between the red and cyan layers of the anaglyph frames for all flipbooks, pass in the desired pixel value after the "3d:" argument, followed by the "r" (red) or "b" (blue) letter indicating which color will be found on the right of the frames (cyan is on the right by default). For example, 'py gif2flipbook.py "3d:25r"' would generate all flipbooks in 3D format, with 25 pixels in-between the cyan and red channels, with the red layer on the right. 
+  - Should you only want specific animations to be converted into anaglyph flipbooks, with the other ones being standard flipbooks, include "(3d)" in the file name (ex: 'my_animation_(3d).gif').
+    - Similarly to what was mentioned above, you can specify the number of pixels in-between the red and blue channels on a file to file basis directly in the file name. For example 'my_animation(3d25r).gif' would give the same results as 'py gif2flipbook.py "3d:25r"', but just for the file 'my_animation(3d25r).gif'. Once again, please keep in mind that any parameters included in the file name trumps those passed in as additional arguments when running the code. For example, were you to run the code with the following command: 'py gif2flipbook.py "3d:25b"', and should you want one of these animations to have 50 pixels in-between the red and cyan channels instead of 25 px and the red layer on the right instead of the blue one, the file name of that animation would run along these lines: 'my_animation(3d50r).gif'
+  - A 3d anaglyph GIF will be created for each animation, allowing you to view it with your red-blue 3d glasses to make sure that the settings are right before printing your flipbook. 
 
 - Flipbook page numbers are provided to help you assemble the flipbooks. Please keep in mind that the first page should be at the bottom of the flipbook, facing up, as it is the first frame that you will see when flipping the pages.
 
