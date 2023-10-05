@@ -359,12 +359,12 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
                     #A "VideoCapture" object is instantiated.
                     video = cv2.VideoCapture(gif_files[i])
                     #The minimum number of frames per second between the default value of 25 (or the user-specified value)
-                    #and the actual fps of the video is selected as the new value of "fps", as the video cannot have more
-                    #frames than its fps would allow.
+                    #and the actual fps of the video is selected as the new value of "fps" (rounded up, as the video fps
+                    #could be a float value), as the video cannot have more frames than its fps would allow.
                     video_frame_count = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
-                    video_fps = video.get(cv2.CAP_PROP_FPS)
+                    video_fps = round(video.get(cv2.CAP_PROP_FPS))
 
-                    fps = round(min(fps_setting, video_fps))
+                    fps = min(fps_setting, video_fps)
 
                     frame_durations.append(math.floor(1/fps*1000))
                     #The timestamps of the frames in-between the "start_time" and
