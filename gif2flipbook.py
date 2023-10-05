@@ -211,6 +211,12 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
         list_red_right = []
         list_pixels_between_red_cyan = []
 
+        #The "fps_setting" variable stores the default fps setting of 25, unless it was overriden
+        #by the user by passing in another fps value after the "fps" argument when running the code.
+        #This is required, as the fps variable will be overriden with the minimal value in-between
+        #the video fps and the fps supplied by the user (or the default of 25).
+        fps_setting = fps
+
         for i in range(len(gif_files)):
             #Similarly, the presence of the number of horizontal pixels in-between the red and cyan channels
             #of the anaglyph frames found within the file names will be determined here.
@@ -357,7 +363,9 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
                     #frames than its fps would allow.
                     video_frame_count = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
                     video_fps = video.get(cv2.CAP_PROP_FPS)
-                    fps = min(fps, video_fps)
+
+                    fps = round(min(fps_setting, video_fps))
+
                     frame_durations.append(math.floor(1/fps*1000))
                     #The timestamps of the frames in-between the "start_time" and
                     #"end_time" are assembled in the list "frame_timestamps".
@@ -787,10 +795,9 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
     shutil.rmtree(os.path.join(cwd, "PNGS"))
 
     for i in range(len(gif_names)):
-        AnaglyphFrameNumber_PILImage[i] = sorted(AnaglyphFrameNumber_PILImage[i], key=lambda x:x[0])
-        AnaglyphFrameNumber_PILImage[i] = [AnaglyphFrameNumber_PILImage[i][j][1] for j in range(0,gif_number_of_frames[i])]
-
         if list_three_dee[i] == True:
+            AnaglyphFrameNumber_PILImage[i] = sorted(AnaglyphFrameNumber_PILImage[i], key=lambda x:x[0])
+            AnaglyphFrameNumber_PILImage[i] = [AnaglyphFrameNumber_PILImage[i][j][1] for j in range(0,gif_number_of_frames[i])]
             print('\nCurrently generating the 3D anaglyph GIF for the animation: "' + gif_names[i] + '".')
             #The GIF is saved, with the "AnaglyphFrameNumber_PILImage" containing all of the frames, and "image_sequence_duration"
             #listing their duration in milliseconds.
