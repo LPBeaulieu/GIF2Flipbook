@@ -794,10 +794,18 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
     #Lastly, the "PNGS" folder containing the PNGs and its contents is deleted.
     shutil.rmtree(os.path.join(cwd, "PNGS"))
 
+    #The anaglyph GIFS are created to give an preview of the finished product.
     for i in range(len(gif_names)):
         if list_three_dee[i] == True:
-            AnaglyphFrameNumber_PILImage[i] = sorted(AnaglyphFrameNumber_PILImage[i], key=lambda x:x[0])
-            AnaglyphFrameNumber_PILImage[i] = [AnaglyphFrameNumber_PILImage[i][j][1] for j in range(0,gif_number_of_frames[i])]
+            #If the first frame of the animation is located at the index 0 of "AnaglyphFrameNumber_PILImage[i]",
+            #and the second frame is found at index 1 of "AnaglyphFrameNumber_PILImage[i]", then it means that
+            #the frames are in increaing order and do not need to be reversed in creating the GIFS. It that is
+            #not the case (the last frame of the flipbook could land on the first frame at index 0 if the GIF
+            #repeats), then the frames will be assembled in reverse order to create the GIF.
+            if AnaglyphFrameNumber_PILImage[i][0][0] == 0 and AnaglyphFrameNumber_PILImage[i][1][0] == 1:
+                AnaglyphFrameNumber_PILImage[i] = [AnaglyphFrameNumber_PILImage[i][j][1] for j in range(0,gif_number_of_frames[i])]
+            else:
+                AnaglyphFrameNumber_PILImage[i] = [AnaglyphFrameNumber_PILImage[i][j][1] for j in range(gif_number_of_frames[i]-1, -1, -1)]
             print('\nCurrently generating the 3D anaglyph GIF for the animation: "' + gif_names[i] + '".')
             #The GIF is saved, with the "AnaglyphFrameNumber_PILImage" containing all of the frames, and "image_sequence_duration"
             #listing their duration in milliseconds.
