@@ -6,9 +6,11 @@ import math
 import numpy as np
 import os
 from PIL import Image, ImageDraw, ImageFont, ImageEnhance
+from pypdf import PdfMerger
 import re
 import shutil
 import sys
+
 
 cwd = os.getcwd()
 #The default non-printable border at the top and bottom
@@ -29,9 +31,9 @@ numbers_font = ImageFont.truetype(os.path.join(cwd, "baskvl.ttf"), 60)
 lines = True
 
 #The default resolution of the PDF resolution is set to
-#100 dpi and can be altered by passing in the desired
+#200 dpi and can be altered by passing in the desired
 #value, after the "resolution:" argument.
-pdf_resolution = 100
+pdf_resolution = 200
 
 #If the user does not wish the size of the images to be increased
 #so as to fit within the available space, the "no_size_increase"
@@ -202,7 +204,7 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
         #The list "frame_durations" will either contain an integer value of the millisecond duration of each frame
         #for video animations (1/fps*1000) or the list of individual millisecond durations for each frames of
         #an animated image such as GIFS. This will allow to extract the frames from the videos and to generate
-        #anaglyph GIF previews of the 3D flipbooks.
+        #GIF previews of the 3D flipbooks.
         frame_durations = []
 
         #The list "list_red_right" will keep track of which anaglyph animations have the red channel
@@ -420,7 +422,7 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
                         gif_number_of_frames.append(gif_object.n_frames)
                     except Exception as e:
                         print(str(e))
-                        sys.exit(file_extension + " files are not supported for 3D anaglyph flipbook generation." +
+                        sys.exit(file_extension + " files are not supported for flipbook generation." +
                         " Please use another file format such as GIF or MP4.")
             bar()
 
@@ -464,10 +466,10 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
     #"png_index_list", which will determine when a shorter GIF
     #will need to loop over.
     png_index_list = []
-    #The list "AnaglyphFrameNumber_PILImage" will contain the
+    #The list "FrameNumber_PILImage" will contain the
     #3D frames for each animation that will be used to create a GIF
-    #preview of the anaglyph animation.
-    AnaglyphFrameNumber_PILImage = []
+    #preview of the flipbook.
+    FrameNumber_PILImage = []
     gif_indices_repeat = [0, 0, 0, 0, 0, 0, 0, 0]
     #For every new GIF, an empty list is appended to "png_index_list"
     #in order to add the PNG frame indices, up to the last index within
@@ -482,7 +484,9 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
         #A new empty list is appended for each animation, which will be
         #populated later in the code with the 3d frames with the red and
         #cyan channels separated by a certain number of pixels on the "x" axis.
-        AnaglyphFrameNumber_PILImage.append([])
+        #Alternatively, if the 3D option isn't selected, the PIL image will
+        #be appended instead.
+        FrameNumber_PILImage.append([])
         for j in range(maximum_frame_number):
             if gif_indices_repeat[i] < len(gif_png_paths[i])-1:
                 png_index_list[-1] = [gif_indices_repeat[i]] + png_index_list[-1]
@@ -540,6 +544,10 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
             5:"(math.floor(8.5/4*300-width/2), math.floor(11*300-border-height))",
             6:"(math.floor(8.5/4*300-width/2), math.floor(11*300-border-height))",
             7:"(math.floor(8.5*0.75*300-width/2), math.floor(11*300-border-height))"}
+
+        #Each frame will be saved as an individual PDF document, and these will
+        #be merged together after the end of the "for i in range(maximum_frame_number):" loop.
+        pdf_number = 0
 
         for i in range(maximum_frame_number):
             #A blank canvas (white US letter JPEG image, with a resolution of 300 ppi (2550x3300 px))
@@ -694,8 +702,9 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
                     math.floor(0.5*height_pixel_adjustment), list_pixels_between_red_cyan[j] + unextended_gif_dimensions[j][0],
                     math.floor(0.5*height_pixel_adjustment) + unextended_gif_dimensions[j][1]))
 
-                    AnaglyphFrameNumber_PILImage[j].append([png_index_list[j][i], frame_k])
-
+                #The current frame index followed by the PIL image of the frame "frame_k"
+                #are appended to "FrameNumber_PILImage"
+                FrameNumber_PILImage[j].append([png_index_list[j][i], frame_k])
 
                 #If there are four or less GIFS within the "GIFS" subfolder of the
                 #working folder, these will all be printed on the same side of the page,
@@ -770,47 +779,67 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
                 blank_canvas_reverse.paste(page_number_text, (math.floor(2550*0.75-page_number_half_width), math.floor(3300/2+border)))
                 blank_canvas_reverse.paste(page_number_text, (math.floor(2550*0.25-page_number_half_width), math.floor(3300/2+border)))
 
-            #The PDF files are saved in the "if" and "else" statements
-            #below, with the "append=True" option being selected for
-            #the pages after the first one.
-            if i == 0:
-                pdf_path = os.path.join(cwd, str(date.today()) + " flipbook")
+            #The "blank_canvas" and "blank_canvas_reverse" images are scaled according to the "pdf_resolution" dpi value,
+            #taking into account that the initial canvas pixel size was 2550x3300 px for a 300 dpi canvas (typical quality
+            #used in professional printing jobs).
+            blank_canvas = blank_canvas.resize((round(2550*pdf_resolution/300), round(3300*pdf_resolution/300)), resample=Image.Resampling.LANCZOS)
+            if len(gif_files) > 4:
+                blank_canvas_reverse = blank_canvas_reverse.resize((round(2550*pdf_resolution/300), round(3300*pdf_resolution/300)), resample=Image.Resampling.LANCZOS)
 
-                if not os.path.exists(pdf_path):
-                    os.makedirs(pdf_path)
-                blank_canvas.save(os.path.join(pdf_path, str(date.today()) + " flipbook.pdf"), resolution=pdf_resolution)
-                if len(gif_files) > 4:
-                    blank_canvas_reverse.save(os.path.join(pdf_path, str(date.today()) + " flipbook.pdf"),
-                    append=True, resolution=pdf_resolution)
+            #The path "pdf_path" will store the separate PDF files for each frame,
+            #and the merging of the PDF files will be done using the PdfMerger Class
+            #from the pyPDF module, as otherwise the assembly of a large PDF file is
+            #quite lengthy towards the end of the process with PIL, as the file rapidly
+            #becomes too large.
+            pdf_path = os.path.join(cwd, str(date.today()) + " flipbook", "PDF_parts")
+            if not os.path.exists(pdf_path):
+                os.makedirs(pdf_path)
+            pdf_number += 1
+            blank_canvas.save(os.path.join(pdf_path, str(date.today()) + " flipbook-" + str(pdf_number) + ".pdf"), resolution=pdf_resolution)
+            #If there are more than four GIFs being converted into flipbooks, then it
+            #means that at least one of them will be found on the reverse pages. The
+            #frame of the reverse page ("blank_canvas_reverse") is then saved as a PDF file.
+            if len(gif_files) > 4:
+                pdf_number += 1
+                blank_canvas_reverse.save(os.path.join(pdf_path, str(date.today()) + " flipbook-" + str(pdf_number) + ".pdf"),
+                append=False, resolution=pdf_resolution)
 
-            else:
-                blank_canvas.save(os.path.join(pdf_path, str(date.today()) + " flipbook.pdf"),
-                append=True, resolution=pdf_resolution)
-                if len(gif_files) > 4:
-                    blank_canvas_reverse.save(os.path.join(pdf_path, str(date.today()) + " flipbook.pdf"),
-                    append=True, resolution=pdf_resolution)
             bar()
+
+    final_pdf_path = os.path.join(cwd, str(date.today()) + " flipbook")
+    #The list returned by "glob" is sorted, such that the number suffixes directly
+    #preceding the ".pdf" file extension may be assembled in sequence in the resulting list.
+    #For example: "['2023-10-05 flipbook-1.pdf', '2023-10-05 flipbook-2.pdf',
+    #'2023-10-05 flipbook-3.pdf']. This is important in order merge the PDF documents
+    #in the correct order.
+    pdf_files = sorted(glob.glob(os.path.join(pdf_path, "*.pdf")), key=lambda x: int(x.split("-")[-1].split(".")[0]))
+    pdf_merger = PdfMerger()
+    for path in pdf_files:
+        pdf_merger.append(path)
+    pdf_merger.write(os.path.join(cwd, str(date.today()) + " flipbook", str(date.today()) + " flipbook.pdf"))
+
+    #The folder containing the separate PDF parts is deleted.
+    shutil.rmtree(os.path.join(pdf_path))
 
     #Lastly, the "PNGS" folder containing the PNGs and its contents is deleted.
     shutil.rmtree(os.path.join(cwd, "PNGS"))
 
-    #The anaglyph GIFS are created to give an preview of the finished product.
+    #The GIFS are created to give an preview of the finished flipbooks.
     for i in range(len(gif_names)):
-        if list_three_dee[i] == True:
-            #If the first frame of the animation is located at the index 0 of "AnaglyphFrameNumber_PILImage[i]",
-            #and the second frame is found at index 1 of "AnaglyphFrameNumber_PILImage[i]", then it means that
-            #the frames are in increaing order and do not need to be reversed in creating the GIFS. It that is
-            #not the case (the last frame of the flipbook could land on the first frame at index 0 if the GIF
-            #repeats), then the frames will be assembled in reverse order to create the GIF.
-            if AnaglyphFrameNumber_PILImage[i][0][0] == 0 and AnaglyphFrameNumber_PILImage[i][1][0] == 1:
-                AnaglyphFrameNumber_PILImage[i] = [AnaglyphFrameNumber_PILImage[i][j][1] for j in range(0,gif_number_of_frames[i])]
-            else:
-                AnaglyphFrameNumber_PILImage[i] = [AnaglyphFrameNumber_PILImage[i][j][1] for j in range(gif_number_of_frames[i]-1, -1, -1)]
-            print('\nCurrently generating the 3D anaglyph GIF for the animation: "' + gif_names[i] + '".')
-            #The GIF is saved, with the "AnaglyphFrameNumber_PILImage" containing all of the frames, and "image_sequence_duration"
-            #listing their duration in milliseconds.
-            AnaglyphFrameNumber_PILImage[i][0].save(os.path.join(pdf_path, gif_names[i] + '.gif'), save_all=True,
-            append_images=AnaglyphFrameNumber_PILImage[i][1:], duration = gif_frame_duration_ms[i], loop = 0)
+        #If the first frame of the animation is located at the index 0 of "FrameNumber_PILImage[i]",
+        #and the second frame is found at index 1 of "FrameNumber_PILImage[i]", then it means that
+        #the frames are in increaing order and do not need to be reversed in creating the GIFS. It that is
+        #not the case (the last frame of the flipbook could land on the first frame at index 0 if the GIF
+        #repeats), then the frames will be assembled in reverse order to create the GIF.
+        if FrameNumber_PILImage[i][0][0] == 0 and FrameNumber_PILImage[i][1][0] == 1:
+            FrameNumber_PILImage[i] = [FrameNumber_PILImage[i][j][1] for j in range(0,gif_number_of_frames[i])]
+        else:
+            FrameNumber_PILImage[i] = [FrameNumber_PILImage[i][j][1] for j in range(gif_number_of_frames[i]-1, -1, -1)]
+        print('\nCurrently generating the GIF for the animation: "' + gif_names[i] + '".')
+        #The GIF is saved, with the "FrameNumber_PILImage" containing all of the frames, and "image_sequence_duration"
+        #listing their duration in milliseconds.
+        FrameNumber_PILImage[i][0].save(os.path.join(final_pdf_path, gif_names[i] + '.gif'), save_all=True,
+        append_images=FrameNumber_PILImage[i][1:], duration = gif_frame_duration_ms[i], loop = 0)
 
 else:
     print("Please include between one and eight GIF files inclusively within the GIFS folder.")
