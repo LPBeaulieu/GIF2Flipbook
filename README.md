@@ -62,12 +62,17 @@ py -m pip install --upgrade Pillow
 py -m pip install opencv-python
 ```
 
-<b>Step 3</b>- Install <b>NumPy</b> (Python module handle the video frame timestamp data):
+<b>Step 3</b>- Install <b>pypdf</b> (Python module to handle PDF documents):
+```
+py -m pip install pypdf
+```
+
+<b>Step 4</b>- Install <b>NumPy</b> (Python module handle the video frame timestamp data):
 ```
 py -m pip install numpy
 ```
 
-<b>Step 4</b>- Install <b>alive-Progress</b> (Python module for a progress bar displayed in command line):
+<b>Step 5</b>- Install <b>alive-Progress</b> (Python module for a progress bar displayed in command line):
 ```
 py -m pip install alive-progress
 ```
@@ -94,7 +99,7 @@ py gif2flipbook.py "fps:25" "number_of_frames:250"
 
 - The frames are automatically resized (either shrunk down or blown up) so that they could fit within the available space in every quadrant of the page. Should you not wish for their size to be increased, pass in the following argument when running the code: "no_size_increase".
 
-- The default resolution of the PDF file is set to 100 dpi to keep the generated file reasonable in size, but you may change this by passing in the "resolution:" argument, followed by the number of dpi (ex: 'py gif2flipbook.py "resolution:200"' would generate the PDF document with a resolution of 200 dpi). 
+- The default resolution of the PDF file is set to 200 dpi to keep the generated file reasonable in size, but you may change this by passing in the "resolution:" argument, followed by the number of dpi (ex: 'py gif2flipbook.py "resolution:300"' would generate the PDF document with a resolution of 300 dpi). 
 
 - By default, the extracted frames of the animations are not brightened in creating the flipbooks. You may specify a brightening value applied to all frames of all animations by passing in the percentage value after the "brighten:"
 argument (ex: "brighten:20%" to brighten all frames of all animations by 20%), or indicate the brightening value for a specific animation in its file name (ex: "my animation (-10%).gif", in which case this specific animation would be
@@ -114,6 +119,8 @@ darkened by 10%, the darkening being a result of the negative sign). Please note
 - Flipbook page numbers are provided to help you assemble the flipbooks. Please keep in mind that the first page should be at the bottom of the flipbook, facing up, as it is the first frame that you will see when flipping the pages.
 
 - Please be careful not to confuse the PDF page numbers with the frame numbers printed on the flipbook pages when printing your document.
+
+- Be sure to select the "flip on long edge" option for duplex printing when printing your flipbooks in protrait mode.
 
 - Once you are done printing and cutting your pages, you can perforate the pages and bind them with 1 inch plastic binder rings. Despite my shoddy scissor work, the flipbooks still turned out great!
 
