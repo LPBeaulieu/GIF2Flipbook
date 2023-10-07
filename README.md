@@ -90,12 +90,9 @@ Depending on the number of frames of your animations, it may take several minute
 
 - The animation with the maximal number of frames will be selected to determine the numbert of pages in the PDF document, with the shorter animations looping over and over until the longest one completes. You can also input the number of frames that you wish the flipbooks to contain if you want a truncated or prolonged flipbook. Simply pass in the number of frames after the "number_of_frames:" argument when running the code.
 
-- <b>For best results, generate flipbooks from 5 second video clips, with an fps of 25 and a "number_of_frames" of 250</b>. This way, the animation will loop over twice (5 seconds x 25 frames per second = 125 frames), ensuring that you get good results when using the flipbook, as it can be difficult to flick the pages smoothly towards the end of the fipbook:
-```
-py gif2flipbook.py "fps:25" "number_of_frames:250"
-```
+- <b>For best results, generate flipbooks from 5 to 6 second video clips, with an fps of 25. This results in flipbooks of a thickness of around 3-4 cm (1.2-1.5 inch) when printed on 24 lb multipurpose paper. A minimum weight of 24 lb should be used when printing with inkjet printers, so as to minimize any ink bleeding onto the other side of the page, as the flipbooks are to be printed in duplex mode when more than 4 flipbooks are generated at a time.</b>
 
-- The size of the border (default of 0.25 inch) may be changed to another value. Simply pass in the number of inches (in decimal form and without units) after the "border:" argument. For borderless printing, enter "border:0" when running the code.
+- The size of the border (default of 0.25 inch) may be changed to another value. Simply pass in the number of inches (in decimal form and without units) after the "border:" argument. For borderless printing, enter "border:0" when running the code. <b>As the white border is already included in the PDF document, make sure to print without the "page scaling" setting set to none.</b>  
 
 - The frames are automatically resized (either shrunk down or blown up) so that they could fit within the available space in every quadrant of the page. Should you not wish for their size to be increased, pass in the following argument when running the code: "no_size_increase".
 
