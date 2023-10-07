@@ -90,7 +90,7 @@ Depending on the number of frames of your animations, it may take several minute
 
 - The animation with the maximal number of frames will be selected to determine the numbert of pages in the PDF document, with the shorter animations looping over and over until the longest one completes. You can also input the number of frames that you wish the flipbooks to contain if you want a truncated or prolonged flipbook. Simply pass in the number of frames after the "number_of_frames:" argument when running the code.
 
-- <b>For best results, generate flipbooks from 5 to 6 second video clips, with an fps of 25. This results in flipbooks of a thickness of around 3-4 cm (1.2-1.5 inch) when printed on 24 lb multipurpose paper. A minimum weight of 24 lb should be used when printing with inkjet printers, so as to minimize any ink bleeding onto the other side of the page, as the flipbooks are to be printed in duplex mode when more than 4 flipbooks are generated at a time.</b>
+- <b>For best results, generate flipbooks from 5 to 6 second video clips, with an fps of 25. This results in flipbooks of a thickness of around 3-4 cm (1.2-1.5 inch) when printed on 24 lb multipurpose paper. A minimum weight of 24 lb should be used when printing on inkjet printers, so as to minimize any ink bleeding onto the other side of the page, as the flipbooks are to be printed in duplex mode when more than 4 flipbooks are generated at a time. Also, when printing flipbooks on laser printers, the density may need to be decreased to avoid printing too dark.</b>
 
 - The size of the border (default of 0.25 inch) may be changed to another value. Simply pass in the number of inches (in decimal form and without units) after the "border:" argument. For borderless printing, enter "border:0" when running the code. <b>As the white border is already included in the PDF document, make sure to print without the "page scaling" setting set to none.</b>  
 
@@ -115,9 +115,9 @@ darkened by 10%, the darkening being a result of the negative sign). Please note
 
 - Flipbook page numbers are provided to help you assemble the flipbooks. Please keep in mind that the first page should be at the bottom of the flipbook, facing up, as it is the first frame that you will see when flipping the pages.
 
-- Please be careful not to confuse the PDF page numbers with the frame numbers printed on the flipbook pages when printing your document.
+- <b>Please be careful not to confuse the PDF page numbers with the frame numbers printed on the flipbook pages when printing your document.</b>
 
-- Be sure to select the "flip on long edge" option for duplex printing when printing your flipbooks in protrait mode.
+- <b>Be sure to select the "flip on long edge" option for duplex printing when printing your flipbooks in protrait mode.</b>
 
 - Once you are done printing and cutting your pages, you can perforate the pages and bind them with 1 inch plastic binder rings. Despite my shoddy scissor work, the flipbooks still turned out great! For smoother page flicking though, I would suggest actually binding your flipbooks using PVA glue (see the figures 9 to 26 of my other github <b>PrintABook</b> for more details on this: https://github.com/LPBeaulieu/Book-Generator-PrintABook)
 
