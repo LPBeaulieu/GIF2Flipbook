@@ -119,7 +119,7 @@ darkened by 10%, the darkening being a result of the negative sign). Please note
 
 - <b>Be sure to select the "flip on long edge" option for duplex printing when printing your flipbooks in protrait mode.</b>
 
-- Once you are done printing and cutting your pages, you can perforate the pages and bind them with 1 inch plastic binder rings. Despite my shoddy scissor work, the flipbooks still turned out great! For smoother page flicking though, I would suggest actually binding your flipbooks using PVA glue (see the figures 9 to 26 of my other github <b>PrintABook</b> for more details on this: https://github.com/LPBeaulieu/Book-Generator-PrintABook)
+- Once you are done printing and cutting your pages, you can perforate the pages and bind them with 1 inch plastic binder rings. Despite my shoddy scissor work, the flipbooks still turned out great! <b>For smoother page flicking though, I would suggest actually binding your flipbooks using PVA glue</b> (see the figures 9 to 26 of my other github <b>PrintABook</b> for more details on this: https://github.com/LPBeaulieu/Book-Generator-PrintABook)
 
 ![Figure 1](https://github.com/LPBeaulieu/GIF2Flipbook/blob/main/Flipbook%20binding.jpg)<hr> <b>Figure 1.</b> Simply bind your perforated page with binder rings for very nifty looking flipbooks!
         
