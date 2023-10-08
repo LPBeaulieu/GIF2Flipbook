@@ -113,7 +113,7 @@ darkened by 10%, the darkening being a result of the negative sign). Please note
 
 - Make sure that you include a space in-between arguments, and that you place each argument within quotes when running the Python code (for example: py gif2flipbook.py "border:0.5" "number_of_frames:100" "no_lines").
 
-- Flipbook page numbers are provided to help you assemble the flipbooks. Please keep in mind that the first page should be at the bottom of the flipbook, facing up, as it is the first frame that you will see when flipping the pages.
+- <b>Flipbook page numbers are provided to help you assemble the flipbooks. Please keep in mind that the first page should be at the bottom of the flipbook, facing up, as it is the first frame that you will see when flipping the pages.</b>
 
 - <b>Please be careful not to confuse the PDF page numbers with the frame numbers printed on the flipbook pages when printing your document.</b>
 
