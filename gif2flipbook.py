@@ -6,7 +6,7 @@ import math
 import numpy as np
 import os
 from PIL import Image, ImageDraw, ImageFont, ImageEnhance
-from pypdf import PdfMerger
+from pypdf import PdfWriter
 import re
 import shutil
 import sys
@@ -787,7 +787,7 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
                 blank_canvas_reverse = blank_canvas_reverse.resize((round(2550*pdf_resolution/300), round(3300*pdf_resolution/300)), resample=Image.Resampling.LANCZOS)
 
             #The path "pdf_path" will store the separate PDF files for each frame,
-            #and the merging of the PDF files will be done using the PdfMerger Class
+            #and the merging of the PDF files will be done using the PdfWriter Class
             #from the pyPDF module, as otherwise the assembly of a large PDF file is
             #quite lengthy towards the end of the process with PIL, as the file rapidly
             #becomes too large.
@@ -813,7 +813,7 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
     #'2023-10-05 flipbook-3.pdf']. This is important in order merge the PDF documents
     #in the correct order.
     pdf_files = sorted(glob.glob(os.path.join(pdf_path, "*.pdf")), key=lambda x: int(x.split("-")[-1].split(".")[0]))
-    pdf_merger = PdfMerger()
+    pdf_merger = PdfWriter()
     for path in pdf_files:
         pdf_merger.append(path)
     pdf_merger.write(os.path.join(cwd, str(date.today()) + " flipbook", str(date.today()) + " flipbook.pdf"))
