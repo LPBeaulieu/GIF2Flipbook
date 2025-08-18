@@ -18,6 +18,18 @@ cwd = os.getcwd()
 #corresponding number of pixels, 75 px)
 border = math.floor(0.25*300)
 
+#The default vertical shift of the frames is set to zero pixels.
+#Should the user use the default quarter inch border and
+#use a stack paper cutter to trim the flipping edges of
+#the bound flipbooks, they may wish to shift the frames up
+#by 1/8 to 1/4 inch to leave some room to trim the edges
+#with the stack paper cutter, in which case they would
+#pass in the argument "vertical_shift:", followed by
+#the number of inches, in decimal form and without units
+#(ex: "vertical_shift:0.25" to shift the frames upwards
+#by a quarter inch) when running the code.
+y_shift = 0
+
 #The frame number i+1 from the "for i in range(maximum_frame_number):" loop
 #is printed in the top of each quadrant in order to facilitate flipbook assembly.
 numbers_font = ImageFont.truetype(os.path.join(cwd, "baskvl.ttf"), 60)
@@ -103,44 +115,84 @@ brighten_percent = None
 fps = 25
 
 if len(sys.argv) > 1:
-    #The "try/except" statement will
+    #The "try/except" statements will
     #intercept any "ValueErrors" and
     #ask the users to correctly enter
     #the desired values for the variables
     #directly after the colon separating
     #the variable name from the value.
-    try:
-        for i in range(1, len(sys.argv)):
-            if sys.argv[i][:7].strip().lower() == "border:":
+    for i in range(1, len(sys.argv)):
+        if sys.argv[i][:7].strip().lower() == "border:":
+            try:
                 border = math.floor(float(sys.argv[i][7:])*300)
-            elif sys.argv[i].strip().lower() in ["no_lines", "no_lines:"]:
-                lines = False
-            elif sys.argv[i].strip().lower() in ["no_size_increase", "no_size_increase"]:
-                no_size_increase = True
-            elif sys.argv[i][:17].strip().lower() == "number_of_frames:":
+            except Exception as e:
+                print(e)
+                sys.exit('\nPlease specify the non-printable border (in inches and decimal form, but without units) ' +
+                'preceded by the "border:" argument. Also, you may pass in the "no_lines" argument should you not ' +
+                'wish to have guides to cut along the line when assembling your flipbook (if you are printing on ' +
+                'perforated paper, for instance). For example, for a 1/4 inch border and no guiding lines, you would ' +
+                'enter the following: "python3 gif2flipbook.py border:0.25 no_lines".\n')
+
+        elif sys.argv[i][:15].strip().lower() == "vertical_shift:":
+            try:
+                y_shift = math.floor(float(sys.argv[i][15:])*300)
+            except Exception as e:
+                print(e)
+                sys.exit('\nPlease specify vertical shift for the frames (in inches and decimal form, but without units) ' +
+                'preceded by the "vertical_shift:" argument. Also, you may pass in the "no_lines" argument should you not ' +
+                'wish to have guides to cut along the line when assembling your flipbook (if you are printing on ' +
+                'perforated paper, for instance). For example, for a 1/4 inch vertical shift up and no guiding lines, you would ' +
+                'enter the following: "python3 gif2flipbook.py vertical_shift:0.25 no_lines".\n')
+
+        elif sys.argv[i].strip().lower() in ["no_lines", "no_lines:"]:
+            lines = False
+        elif sys.argv[i].strip().lower() in ["no_size_increase", "no_size_increase"]:
+            no_size_increase = True
+        elif sys.argv[i][:17].strip().lower() == "number_of_frames:":
+            try:
                 number_of_frames = int(sys.argv[i][17:])
-            elif sys.argv[i][:4].strip().lower() == "fps:":
+            except Exception as e:
+                print(e)
+                sys.exit('\nPlease provide an integer value for the number of frames for the flipbooks (number of pages for a given animation), ' + 
+                'after the "number_of_frames:" argument. For example, for 250 frames, you would enter the following: ' +
+                '"python3 gif2flipbook.py frame_number:250".\n')
+        elif sys.argv[i][:4].strip().lower() == "fps:":
+            try:
                 fps = int(sys.argv[i][4:].strip())
-            elif sys.argv[i][:9].strip().lower() == "brighten:":
+            except Exception as e:
+                print(e)
+                sys.exit('\nPlease provide an integer value for the number of frames per second (fps) for the animations, ' + 
+                'after the "fps:" argument. For example, for 20 frames per second, you would enter the following: ' +
+                '"python3 gif2flipbook.py fps:20". Keep in mind that you can always choose to have a lower fps for ' +
+                'the flipbooks than the source video\'s fps, but you may never exceed it. For example, for videos with ' +
+                '25 fps, you could have flipbooks with 20 fps, but not 30 fps, as this exceeds the video\'s fps value of 25.\n')
+        elif sys.argv[i][:9].strip().lower() == "brighten:":
+            try:
                 brighten_percent = int(sys.argv[i][9:].replace("%", "").strip())/100
-            #Should all flipbooks need to be generated in 3d anaglyph format, you may pass in the "3d" argument
-            #when running the code and "three_dee_flipbooks" will be set to "True". The default number of
-            #pixels in-between the red and cyan channels is set to 15 pixels, with the cyan layer on the
-            #right. Should you like to change the number of horizontal pixels in-between the red and cyan
-            #channels for all of the anaglyph flipbooks, you would need to pass in the number of pixels
-            #after the "3d" argument, preceded by a colon. For example, "3d:30" would generate anaglyph
-            #flipbooks with 30 pixels in-between the red and cyan channels, with the cyan layer on
-            #the right. To have the red layer be on the right side of the anaglyph frames for all 3D
-            #flipbooks, simply add "r" after the number (ex: "3d:30r"). You may also decide to only
-            #have selected animations rendered in 3d anaglyph format (or only certain animations with
-            #the red layer on the right) by including the parenthesized number of pixels in-between
-            #the red and cyan layers, preceded by "3d" and followed by either "r" (red) or "b" (blue)
-            #designating which layer will be found on the right end of the anaglyph frames for this animation
-            #(ex: "my_video (5)(10)(3d30r).mp4" would generate a subclip spanning the timestamps of 5 to 10 seconds of
-            #that animation in anaglyph format, with 30 pixels in-between the red and cyan layers, with the red
-            #channel being on the right of the frames.
-            elif sys.argv[i][:2].strip().lower() == "3d":
-                three_dee_flipbooks = True
+            except Exception as e:
+                print(e)
+                sys.exit('\nPlease provide an integer value for brightening percentage that is to be applied on all animations, ' + 
+                'after the "brighten:" argument, followed by a percentage sign. For example, in order to brighten all videos by 20%, ' +
+                'you would enter the following: "python3 gif2flipbook.py brighten:20%".\n')
+        #Should all flipbooks need to be generated in 3d anaglyph format, you may pass in the "3d" argument
+        #when running the code and "three_dee_flipbooks" will be set to "True". The default number of
+        #pixels in-between the red and cyan channels is set to 15 pixels, with the cyan layer on the
+        #right. Should you like to change the number of horizontal pixels in-between the red and cyan
+        #channels for all of the anaglyph flipbooks, you would need to pass in the number of pixels
+        #after the "3d" argument, preceded by a colon. For example, "3d:30" would generate anaglyph
+        #flipbooks with 30 pixels in-between the red and cyan channels, with the cyan layer on
+        #the right. To have the red layer be on the right side of the anaglyph frames for all 3D
+        #flipbooks, simply add "r" after the number (ex: "3d:30r"). You may also decide to only
+        #have selected animations rendered in 3d anaglyph format (or only certain animations with
+        #the red layer on the right) by including the parenthesized number of pixels in-between
+        #the red and cyan layers, preceded by "3d" and followed by either "r" (red) or "b" (blue)
+        #designating which layer will be found on the right end of the anaglyph frames for this animation
+        #(ex: "my_video (5)(10)(3d30r).mp4" would generate a subclip spanning the timestamps of 5 to 10 seconds of
+        #that animation in anaglyph format, with 30 pixels in-between the red and cyan layers, with the red
+        #channel being on the right of the frames.
+        elif sys.argv[i][:2].strip().lower() == "3d":
+            three_dee_flipbooks = True
+            try:
                 three_dee_split = [element for element in sys.argv[i].strip().lower().split(":") if element != ""]
                 if len(three_dee_split) > 1:
                     pixels_between_red_cyan = int(re.findall(r"[\d]+", three_dee_split[1])[0])
@@ -149,17 +201,26 @@ if len(sys.argv) > 1:
                         #frames for all of the 3d flipbook animations. Otherwise, the default value of "red_right"
                         #is initialized to "False", meaning that the cyan layer is on the right.
                         red_right = True
-            elif sys.argv[i][:11].strip().lower() == "resolution:":
+            except Exception as e:
+                print(e)
+                sys.exit('\nPlease pass in the "3d" argument in order for the code to generate all of your flipbooks in 3d format ' +
+                '(ex: \'py gif2flipbook.py "3d"\'). The default 3D settings should work well in most cases and additional ' +
+                'parameters are described below. The code generates anaglyph images from the frames of your animations, by ' + 
+                'splitting the red and cyan channels of the frames and spacing them out by a certain number of pixels horizontally ' + 
+                '(15 pixels by default, with the cyan channel being on the right). This allows you to see the images in 3D with red-blue 3D glasses. ' +
+                '\nTo change the number of pixels in-between the red and cyan layers of the anaglyph frames for all flipbooks, pass in the desired  ' +
+                'pixel value after the "3d:" argument, followed by the "r" (red) or "b" (blue) letter indicating which color will be found on the right ' +
+                'of the frames (cyan is on the right by default). For example, \'py gif2flipbook.py "3d:25r"\' would generate all flipbooks in 3D format, ' +
+                'with 25 pixels in-between the cyan and red channels, with the red layer on the right')
+        elif sys.argv[i][:11].strip().lower() == "resolution:":
+            try:
                 pdf_resolution = int(sys.argv[i][11:].strip())
-
-    except Exception as e:
-        print(e)
-        sys.exit('\nPlease specify the non-printable border (in inches and decimal form, but without units) ' +
-        'precedec by the "border:" argument. Also, you may pass in the "no_lines" argument should you not ' +
-        'wish to have guides to cut along the line when assembling your flipbook (if you are printing on ' +
-        'perforated paper, for instance). For example, for a 1/4 inch border and no guiding lines, you would ' +
-        'enter the following: "python3 gif2flipbook.py border:0.25 no_lines".\n')
-
+            except Exception as e:
+                print(e)
+                sys.exit('\nPlease provide an integer value for the dpi resolution of the pdf docuemnt, ' + 
+                'after the "resolution:" argument. For example, for 300 dpi resolution, you would enter the following: ' +
+                '"python3 gif2flipbook.py resolution:300".\n')
+    
 path_gifs = os.path.join(cwd, "GIFS", "*.*")
 #The list returned by "glob" is sorted, such that the prefix letters may be
 #assembled in sequence in the resulting list. For example: "['a-name-1.gif', 'A-name-2.gif',
@@ -530,20 +591,36 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
         #at this point, as the "resizing_factor" has not yet been calculated for each GIF.
         #An "eval()" method will be called later in the code upon obtaining this information,
         #effectively updating the values of "image_layout" for the corresponding x,y tuples.
+
+        #The default vertical shift of the frames is set to zero pixels.
+        #Should the user use the default quarter inch border and
+        #use a stack paper cutter to trim the flipping edges of
+        #the bound flipbooks, they may wish to shift the frames up
+        #by 1/8 to 1/4 inch to leave some room to trim the edges
+        #with the stack paper cutter, in which case they would
+        #pass in the argument "vertical_shift:", followed by
+        #the number of inches, in decimal form and without units
+        #(ex: "vertical_shift:0.25" to shift the frames upwards
+        #by a quarter inch) when running the code. This shift
+        #will then be converted in the number of pixels and
+        #stored in the variable "y_shift". The frames are
+        #shifted downwards ("+ y_shift") for the reversed frames (0 and 1)
+        #when "len(gif_files) < 5" and (0, 1, 2 and 3 otherwise),
+        #and shifted upwards ("- y_shift") for the right side up frames.
         if len(gif_files) < 5:
-            image_layout = {0:"(math.floor(8.5/4*300-width/2), border)",
-            1:"(math.floor(8.5*0.75*300-width/2), border)",
-            2:"(math.floor(8.5*0.75*300-width/2), math.floor(11*300-border-height))",
-            3:"(math.floor(8.5/4*300-width/2), math.floor(11*300-border-height))"}
+            image_layout = {0:"(math.floor(8.5/4*300-width/2), border + y_shift)",
+            1:"(math.floor(8.5*0.75*300-width/2), border + y_shift)",
+            2:"(math.floor(8.5*0.75*300-width/2), math.floor(11*300-border-height) - y_shift)",
+            3:"(math.floor(8.5/4*300-width/2), math.floor(11*300-border-height) - y_shift)"}
         elif len(gif_files) > 4:
-            image_layout = {0:"(math.floor(8.5/4*300-width/2), border)",
-            1:"(math.floor(8.5*0.75*300-width/2), border)",
-            2:"(math.floor(8.5*0.75*300-width/2), border)",
-            3:"(math.floor(8.5/4*300-width/2), border)",
-            4:"(math.floor(8.5*0.75*300-width/2), math.floor(11*300-border-height))",
-            5:"(math.floor(8.5/4*300-width/2), math.floor(11*300-border-height))",
-            6:"(math.floor(8.5/4*300-width/2), math.floor(11*300-border-height))",
-            7:"(math.floor(8.5*0.75*300-width/2), math.floor(11*300-border-height))"}
+            image_layout = {0:"(math.floor(8.5/4*300-width/2), border + y_shift)",
+            1:"(math.floor(8.5*0.75*300-width/2), border + y_shift)",
+            2:"(math.floor(8.5*0.75*300-width/2), border + y_shift)",
+            3:"(math.floor(8.5/4*300-width/2), border + y_shift)",
+            4:"(math.floor(8.5*0.75*300-width/2), math.floor(11*300-border-height) - y_shift)",
+            5:"(math.floor(8.5/4*300-width/2), math.floor(11*300-border-height) - y_shift)",
+            6:"(math.floor(8.5/4*300-width/2), math.floor(11*300-border-height) - y_shift)",
+            7:"(math.floor(8.5*0.75*300-width/2), math.floor(11*300-border-height) - y_shift)"}
 
         #Each frame will be saved as an individual PDF document, and these will
         #be merged together after the end of the "for i in range(maximum_frame_number):" loop.
@@ -788,7 +865,7 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
 
             #The path "pdf_path" will store the separate PDF files for each frame,
             #and the merging of the PDF files will be done using the PdfWriter Class
-            #from the pyPDF module, as otherwise the assembly of a large PDF file is
+            #from the pypdf module, as otherwise the assembly of a large PDF file is
             #quite lengthy towards the end of the process with PIL, as the file rapidly
             #becomes too large.
             pdf_path = os.path.join(cwd, str(date.today()) + " flipbook", "PDF_parts")
@@ -807,6 +884,7 @@ if len(gif_files) > 0 and len(gif_files) <= 8:
             bar()
 
     final_pdf_path = os.path.join(cwd, str(date.today()) + " flipbook")
+
     #The list returned by "glob" is sorted, such that the number suffixes directly
     #preceding the ".pdf" file extension may be assembled in sequence in the resulting list.
     #For example: "['2023-10-05 flipbook-1.pdf', '2023-10-05 flipbook-2.pdf',
