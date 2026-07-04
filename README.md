@@ -51,6 +51,8 @@ The instructions below are for Windows operating systems, but the code runs very
 
 Start by downloading the zipped working folder, by going to the top of this github repo and clicking on the green "Code" button, and then click on the "Download Zip" option. Extract the zipped folder to your desired location. Next, hold the "Shift" key while right-clicking in your working folder, then select "Open PowerShell window here" to access the PowerShell in your working folder and enter the commands described below. Make sure that you keep the "GIFS" folder within your working folder, in which you will place between 1 and 8 videos, GIFs or other animated image files that you wish to convert into flipbooks.
 
+If your computer is running on Windows 10 or later with a x86_64 architecture, simply include the executable in the unzipped working folder and proceed to the "Usage" section.
+
 <b>Step 1</b>- Install <b>Pillow</b> (Python module to handle the GIFS and other animated image files) using the following command:
 
 ```
@@ -82,10 +84,16 @@ py -m pip install alive-progress
 ## 🎈 Usage <a name="usage"></a>
 - As mentioned above, videos may also be converted into flipbooks and typically give more reliable results, as they likely have a high number of frames per second (fps). It is recommended to either select very short videos (less than 10 seconds, ideally five seconds) or a subclip of your favorite scene, as the number of frames adds up very quickly the longer the animation is. The default number of frames per second is set to 25 fps, and you can change it by inputting the fps of your choosing after the "fps:" argument when running the code (ex: 'py gif2flipbook.py "fps:20"' for 20 frames per second). Should you only wish to convert a subclip of a video into a flipbook, you would then need to specify the starting and ending points of the clip by including them within parentheses in the video file name. The number of hours, minutes and seconds need to be separated by hyphens within these parentheses. For example, a MP4 video starting at 1 hour 35 minutes and 5 seconds and ending at 1 hour 35 minutes and 10 seconds would have the following file name (note the parentheses): "A-YourVideoName-(1-35-5)(1-35-10).mp4". As such, you should refrain from using parentheses in the file names, other than when indicating the additional parameters such as start and end timestamps, 3D anaglyph mode and brightening percentage values (the latter two being covered later). Should you have a video animation (ex: MP4 files, as opposed to GIF files) but no parenthesized start and end timestamps in their file names, the first 5 seconds of the videos will be selected to make the flipbooks.  
 
-- Simply place between 1 and 8 animation files that you wish to convert into flipbooks into the "GIFS" subfolder within your working folder and enter the following in the Powershell within your working folder:
+- Simply place between 1 and 8 animation files that you wish to convert into flipbooks into the "GIFS" subfolder within your working folder and enter the following in the PowerShell within your working folder:
 ```
 py gif2flipbook.py
 ```
+
+If your computer is running on Windows 10 or later with a x86_64 architecture, then run the following in the PowerShell window instead, followed by all of the arguments that you would normally include when running the Python script directly, with each argument separated from one another by a space character.
+```
+./GIF2Flipbook
+```
+
 Depending on the number of frames of your animations, it may take several minutes for the code to generate your PDF file, which may be very large in size. The PDF document for your flipbooks will be saved in a subfolder within your working folder, with the current date in the subfolder's name (ex: "2023-08-31 flipbook"). 
 
 - The animation with the maximal number of frames will be selected to determine the numbert of pages in the PDF document, with the shorter animations looping over and over until the longest one completes. You can also input the number of frames that you wish the flipbooks to contain if you want a truncated or prolonged flipbook. Simply pass in the number of frames after the "number_of_frames:" argument when running the code.
