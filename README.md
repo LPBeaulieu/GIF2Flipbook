@@ -51,7 +51,7 @@ The instructions below are for Windows operating systems, but the code runs very
 
 Start by downloading the zipped working folder, by going to the top of this github repo and clicking on the green "Code" button, and then click on the "Download Zip" option. Extract the zipped folder to your desired location. Next, hold the "Shift" key while right-clicking in your working folder, then select "Open PowerShell window here" to access the PowerShell in your working folder and enter the commands described below. Make sure that you keep the "GIFS" folder within your working folder, in which you will place between 1 and 8 videos, GIFs or other animated image files that you wish to convert into flipbooks.
 
-If your computer is running on Windows 10 or later with a x86_64 architecture, simply include the executable in the unzipped working folder and proceed to the "Usage" section.
+If your computer is running on Windows 10 or later with a x86_64 architecture, simply include the "GIF2Flipbook_Win10_x86_64_v1_0.exe" executable file from the "Releases" section in the unzipped working folder and proceed to the "Usage" section.
 
 <b>Step 1</b>- Install <b>Pillow</b> (Python module to handle the GIFS and other animated image files) using the following command:
 
