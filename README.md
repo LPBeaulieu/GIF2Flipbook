@@ -91,7 +91,7 @@ py gif2flipbook.py
 
 If your computer is running on Windows 10 or later with a x86_64 architecture, then run the following in the PowerShell window instead, followed by all of the arguments that you would normally include when running the Python script directly, with each argument separated from one another by a space character.
 ```
-./GIF2Flipbook
+./GIF2Flipbook_Win10_x86_64_v1_0
 ```
 
 Depending on the number of frames of your animations, it may take several minutes for the code to generate your PDF file, which may be very large in size. The PDF document for your flipbooks will be saved in a subfolder within your working folder, with the current date in the subfolder's name (ex: "2023-08-31 flipbook"). 
