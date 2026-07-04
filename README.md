@@ -89,7 +89,7 @@ py -m pip install alive-progress
 py gif2flipbook.py
 ```
 
-If your computer is running on Windows 10 or later with a x86_64 architecture, then run the following in the PowerShell window instead, followed by all of the arguments that you would normally include when running the Python script directly, with each argument separated from one another by a space character.
+If your computer is running on Windows 10 or later with a x86_64 architecture and you have added the "GIF2Flipbook_Win10_x86_64_v1_0.exe" executable file from the "Releases" section to your working folder, then run the following in the PowerShell window instead, followed by all of the arguments that you would normally include when running the Python script directly, with each argument separated from one another by a space character.
 ```
 ./GIF2Flipbook_Win10_x86_64_v1_0
 ```
